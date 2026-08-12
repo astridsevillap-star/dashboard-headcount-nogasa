@@ -4,6 +4,8 @@ Dashboard web de headcount conectado a Supabase y desplegado en Vercel. Reemplaz
 flujo de Excel: carga mensual de la nómina, presupuesto editable en la plataforma y
 un panel comparativo con detalle hasta el nivel de cargo y persona.
 
+> Repositorio oficial conectado al proyecto `dashboard-headcount-nogasa` en Vercel.
+
 ## Módulos
 
 | Ruta | Qué hace |
