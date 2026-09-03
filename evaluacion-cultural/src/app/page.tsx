@@ -3,39 +3,36 @@
 import { useEffect, useMemo, useState } from "react";
 import { CaretRight } from "@phosphor-icons/react";
 import { KpiCard, Segmented, Select, SectionCard, Skeleton } from "@/components/ui";
-import {
-  DimensionBars,
-  DimensionRadar,
-  EvolutionChart,
-  LegendRow,
-  C,
-} from "@/components/charts";
+import { CompetenciaBars, CompetenciaRadar, LegendRow, C } from "@/components/charts";
 import { EvaluadoDrawer } from "@/components/drawer";
 import {
-  anios,
+  areas as areasOf,
   buildMatrix,
-  cobertura,
-  dimensionScores,
-  evolution,
-  idsForEmpresa,
+  competencias,
+  consolidado,
+  evaluadosFiltrados,
   indiceGeneral,
   loadStore,
   metaGeneral,
-  periodosDe,
+  NIVEL_LABEL,
+  nivelesEvaluados,
+  participacionGeneral,
   ranking,
+  regiones as regionesOf,
   toneFor,
-  empresas as empresasOf,
   type Store,
 } from "@/lib/data";
-import { periodLabel, quarterLabel, score, signedScore, pct } from "@/lib/format";
-import type { Evaluado, MatrixNode } from "@/lib/types";
+import { EDICION } from "@/lib/seed";
+import { score, signedScore, pct } from "@/lib/format";
+import type { MatrixNode, Nivel, Persona } from "@/lib/types";
 
 export default function DashboardPage() {
   const [store, setStore] = useState<Store | null>(null);
-  const [empresa, setEmpresa] = useState<string>("__all__");
-  const [anio, setAnio] = useState<number>(() => anios().at(-1) ?? 2026);
-  const [vista, setVista] = useState<"barras" | "radar">("barras");
-  const [drawer, setDrawer] = useState<{ ev: Evaluado; period: string } | null>(null);
+  const [nivel, setNivel] = useState<string>("__all__");
+  const [area, setArea] = useState<string>("__all__");
+  const [region, setRegion] = useState<string>("__all__");
+  const [vista, setVista] = useState<"barras" | "radar">("radar");
+  const [drawer, setDrawer] = useState<Persona | null>(null);
 
   useEffect(() => {
     setStore(loadStore());
@@ -51,96 +48,66 @@ export default function DashboardPage() {
     );
   }
 
-  return (
-    <Dashboard
-      store={store}
-      empresa={empresa}
-      setEmpresa={setEmpresa}
-      anio={anio}
-      setAnio={setAnio}
-      vista={vista}
-      setVista={setVista}
-      drawer={drawer}
-      setDrawer={setDrawer}
-    />
-  );
-}
+  const filtro = {
+    nivel: nivel === "__all__" ? null : (Number(nivel) as Nivel),
+    area: area === "__all__" ? null : area,
+    region: region === "__all__" ? null : region,
+  };
+  const set = evaluadosFiltrados(store, filtro);
+  const meta = metaGeneral(store);
+  const indice = indiceGeneral(store, set);
+  const part = participacionGeneral(store, set);
+  const comp = consolidado(store, set);
+  const rank = ranking(store, set);
+  const matrix = buildMatrix(store, set);
 
-function Dashboard({
-  store,
-  empresa,
-  setEmpresa,
-  anio,
-  setAnio,
-  vista,
-  setVista,
-  drawer,
-  setDrawer,
-}: {
-  store: Store;
-  empresa: string;
-  setEmpresa: (v: string) => void;
-  anio: number;
-  setAnio: (v: number) => void;
-  vista: "barras" | "radar";
-  setVista: (v: "barras" | "radar") => void;
-  drawer: { ev: Evaluado; period: string } | null;
-  setDrawer: (v: { ev: Evaluado; period: string } | null) => void;
-}) {
-  const empresaFilter = empresa === "__all__" ? null : empresa;
-  const ids = useMemo(() => idsForEmpresa(store, empresaFilter), [store, empresaFilter]);
-  const periods = useMemo(() => periodosDe(anio), [anio]);
-  const focus = periods.at(-1) ?? periods[0];
-
-  const meta = metaGeneral(store, anio);
-  const indice = indiceGeneral(store, ids, focus);
-  const cob = cobertura(store, ids, focus);
-  const dims = useMemo(
-    () => dimensionScores(store, ids, focus, anio),
-    [store, ids, focus, anio]
-  );
-  const evo = useMemo(() => evolution(store, ids), [store, ids]);
-  const rank = useMemo(() => ranking(store, ids, focus), [store, ids, focus]);
-  const matrix = useMemo(() => buildMatrix(store, ids, periods), [store, ids, periods]);
-
-  const debil = [...dims].filter((d) => d.score > 0).sort((a, b) => a.score - b.score)[0];
-  const fuerte = [...dims].sort((a, b) => b.score - a.score)[0];
+  const conDatos = comp.filter((c) => c.score > 0);
+  const alta = [...conDatos].sort((a, b) => b.score - a.score)[0];
+  const baja = [...conDatos].sort((a, b) => a.score - b.score)[0];
   const brecha = indice === null ? null : indice - meta;
-
-  const empresaOptions = empresasOf(store);
+  const cobertura = part.esperados ? (part.respondientes / part.esperados) * 100 : 0;
 
   return (
     <div className="fade-rise flex flex-col gap-5">
-      {/* encabezado + filtros */}
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight text-ink-900">
-            Panel de evaluación cultural
+            Dashboard de resultados
           </h1>
           <p className="mt-0.5 text-sm text-ink-500">
-            Índice cultural por evaluado y dimensión · {periodLabel(focus)}
+            Evaluación cultural {EDICION} · {set.length} líderes evaluados
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Select value={empresa} onChange={(e) => setEmpresa(e.target.value)}>
-            <option value="__all__">Todas las empresas</option>
-            {empresaOptions.map((e) => (
-              <option key={e} value={e}>
-                {e}
+          <Select value={nivel} onChange={(e) => setNivel(e.target.value)}>
+            <option value="__all__">Todos los niveles</option>
+            {nivelesEvaluados(store).map((n) => (
+              <option key={n} value={n}>
+                {NIVEL_LABEL[n]}
               </option>
             ))}
           </Select>
-          <Select value={String(anio)} onChange={(e) => setAnio(Number(e.target.value))}>
-            {anios().map((a) => (
+          <Select value={area} onChange={(e) => setArea(e.target.value)}>
+            <option value="__all__">Todas las áreas</option>
+            {areasOf(store).map((a) => (
               <option key={a} value={a}>
                 {a}
               </option>
             ))}
           </Select>
+          {regionesOf(store).length > 0 && (
+            <Select value={region} onChange={(e) => setRegion(e.target.value)}>
+              <option value="__all__">Todas las regiones</option>
+              {regionesOf(store).map((r) => (
+                <option key={r} value={r}>
+                  {r}
+                </option>
+              ))}
+            </Select>
+          )}
         </div>
       </div>
 
-      {/* KPIs */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <KpiCard
           label="Índice cultural"
@@ -155,83 +122,57 @@ function Dashboard({
           tone={brecha === null ? "neutral" : brecha >= 0 ? "ok" : brecha >= -0.5 ? "warn" : "bad"}
         />
         <KpiCard
-          label="Cobertura"
-          value={cob.total ? pct((cob.evaluados / cob.total) * 100) : "–"}
-          hint={`${cob.evaluados} de ${cob.total} evaluados`}
+          label="Participación"
+          value={part.esperados ? pct(cobertura) : "–"}
+          hint={`${part.respondientes} de ${part.esperados} respuestas`}
         />
         <KpiCard
-          label="Dimensión más baja"
-          value={debil ? score(debil.score) : "–"}
-          hint={debil ? debil.nombre : "Sin datos"}
-          tone={debil ? (debil.score >= meta ? "ok" : debil.score >= meta - 0.5 ? "warn" : "bad") : "neutral"}
+          label="Competencia más baja"
+          value={baja ? score(baja.score) : "–"}
+          hint={baja ? baja.nombre : "Sin datos"}
+          tone={baja ? (baja.score >= meta ? "ok" : baja.score >= meta - 0.5 ? "warn" : "bad") : "neutral"}
         />
       </div>
 
-      {/* evolución */}
-      <SectionCard
-        title="Evolución del índice cultural"
-        desc="Promedio de todas las dimensiones por trimestre, contra la meta del año."
-        right={
-          <LegendRow
-            items={[
-              { label: "Índice", swatch: "line", color: C.brand },
-              { label: "Meta", swatch: "line", color: C.ref },
-            ]}
-          />
-        }
-      >
-        <EvolutionChart data={evo} />
-      </SectionCard>
-
-      {/* comparativo por dimensión + ranking */}
       <div className="grid gap-5 lg:grid-cols-5">
         <div className="lg:col-span-3">
           <SectionCard
-            title="Puntaje por dimensión"
-            desc={`${periodLabel(focus)} · la línea punteada marca la meta`}
+            title="Resultado por competencia"
+            desc={alta && baja ? `Más alta: ${alta.nombre} · más baja: ${baja.nombre}` : "Promedio por competencia"}
             right={
               <Segmented
                 value={vista}
                 onChange={setVista}
                 options={[
-                  { value: "barras", label: "Barras" },
                   { value: "radar", label: "Radar" },
+                  { value: "barras", label: "Barras" },
                 ]}
               />
             }
           >
-            {vista === "barras" ? <DimensionBars data={dims} /> : <DimensionRadar data={dims} />}
+            {vista === "radar" ? <CompetenciaRadar data={comp} /> : <CompetenciaBars data={comp} />}
           </SectionCard>
         </div>
         <div className="lg:col-span-2">
-          <SectionCard
-            title="Ranking de evaluados"
-            desc={`Índice cultural · ${periodLabel(focus)}`}
-          >
-            <div className="flex flex-col">
+          <SectionCard title="Ranking de evaluados" desc="Índice cultural (mayor a menor)">
+            <div className="flex max-h-[320px] flex-col overflow-y-auto">
               {rank.length === 0 && (
-                <p className="py-8 text-center text-sm text-ink-500">Sin datos del periodo.</p>
+                <p className="py-8 text-center text-sm text-ink-500">Sin datos.</p>
               )}
               {rank.map((r, i) => (
                 <button
                   key={r.evaluado.id}
-                  onClick={() => setDrawer({ ev: r.evaluado, period: focus })}
+                  onClick={() => setDrawer(r.evaluado)}
                   className="flex items-center gap-3 border-b border-line-soft py-2 text-left last:border-0 hover:bg-line-soft/60"
                 >
-                  <span className="w-5 tnum text-right font-mono text-[12px] text-ink-400">
-                    {i + 1}
-                  </span>
+                  <span className="w-5 tnum text-right font-mono text-[12px] text-ink-400">{i + 1}</span>
                   <span className="flex-1 truncate text-[13px] text-ink-700">
                     {r.evaluado.nombre}
                     <span className="ml-1.5 text-[11px] text-ink-400">{r.evaluado.area}</span>
                   </span>
                   <span
                     className={`tnum font-mono text-[13px] font-semibold ${
-                      (r.indice ?? 0) >= meta
-                        ? "text-ok-600"
-                        : (r.indice ?? 0) >= meta - 0.5
-                          ? "text-warn-600"
-                          : "text-danger-600"
+                      (r.indice ?? 0) >= meta ? "text-ok-600" : (r.indice ?? 0) >= meta - 0.5 ? "text-warn-600" : "text-danger-600"
                     }`}
                   >
                     {score(r.indice)}
@@ -243,10 +184,9 @@ function Dashboard({
         </div>
       </div>
 
-      {/* matriz */}
       <SectionCard
-        title="Matriz Empresa › Área › Evaluado"
-        desc="Índice cultural por trimestre. Clic en una celda para ver el detalle de la persona."
+        title="Matriz Área › Evaluado"
+        desc="Índice y puntaje por competencia. Clic en un evaluado para ver el detalle."
         right={
           <LegendRow
             items={[
@@ -257,42 +197,26 @@ function Dashboard({
           />
         }
       >
-        <Matrix
-          store={store}
-          nodes={matrix}
-          periods={periods}
-          anio={anio}
-          onPick={(ev, period) => setDrawer({ ev, period })}
-        />
+        <Matrix nodes={matrix} meta={meta} onPick={setDrawer} store={store} />
       </SectionCard>
 
-      <EvaluadoDrawer
-        store={store}
-        evaluado={drawer?.ev ?? null}
-        period={drawer?.period ?? focus}
-        onClose={() => setDrawer(null)}
-      />
+      <EvaluadoDrawer store={store} evaluado={drawer} onClose={() => setDrawer(null)} />
     </div>
   );
 }
 
-/* ---------- matriz ---------- */
-
 function Matrix({
-  store,
   nodes,
-  periods,
-  anio,
+  meta,
   onPick,
+  store,
 }: {
-  store: Store;
   nodes: MatrixNode[];
-  periods: string[];
-  anio: number;
-  onPick: (ev: Evaluado, period: string) => void;
+  meta: number;
+  onPick: (p: Persona) => void;
+  store: Store;
 }) {
   const [expanded, setExpanded] = useState<Set<string>>(() => new Set(nodes.map((n) => n.key)));
-  const meta = metaGeneral(store, anio);
 
   function toggle(key: string) {
     setExpanded((prev) => {
@@ -303,28 +227,25 @@ function Matrix({
     });
   }
 
-  const evaluadoById = useMemo(() => {
-    const m = new Map<string, Evaluado>();
-    for (const e of store.evaluados) m.set(e.id, e);
+  const personaById = useMemo(() => {
+    const m = new Map<string, Persona>();
+    for (const p of store.personas) m.set(p.id, p);
     return m;
   }, [store]);
 
-  const rows: { node: MatrixNode; depth: number }[] = [];
-  const walk = (list: MatrixNode[], depth: number) => {
-    for (const n of list) {
-      rows.push({ node: n, depth });
-      if (n.level < 2 && expanded.has(n.key)) walk(n.children, depth + 1);
-    }
-  };
-  walk(nodes, 0);
-
-  const toneBg = (indice: number | null) => {
-    const t = toneFor(indice, meta);
+  const toneBg = (v: number | null) => {
+    const t = toneFor(v, meta);
     if (t === "ok") return "bg-ok-50 text-ok-600";
     if (t === "warn") return "bg-warn-50 text-warn-600";
     if (t === "bad") return "bg-danger-50 text-danger-600";
     return "text-ink-300";
   };
+
+  const rows: { node: MatrixNode; depth: number }[] = [];
+  for (const root of nodes) {
+    rows.push({ node: root, depth: 0 });
+    if (expanded.has(root.key)) for (const c of root.children) rows.push({ node: c, depth: 1 });
+  }
 
   return (
     <div className="matrix-scroll overflow-x-auto">
@@ -334,20 +255,18 @@ function Matrix({
             <th className="sticky left-0 z-10 bg-surface pb-2 text-left text-[12px] font-medium text-ink-500">
               Estructura
             </th>
-            {periods.map((p) => (
-              <th
-                key={p}
-                className="min-w-[64px] pb-2 text-center text-[12px] font-medium text-ink-500"
-              >
-                {quarterLabel(p, true)}
+            <th className="min-w-[60px] pb-2 text-center text-[12px] font-medium text-ink-500">Índice</th>
+            {competencias.map((c) => (
+              <th key={c.id} className="min-w-[70px] px-1 pb-2 text-center text-[11px] font-medium text-ink-500">
+                {c.nombre}
               </th>
             ))}
+            <th className="min-w-[70px] pb-2 text-center text-[12px] font-medium text-ink-500">Part.</th>
           </tr>
         </thead>
         <tbody>
           {rows.map(({ node, depth }) => {
-            const isLeaf = node.level === 2;
-            const canExpand = node.level < 2;
+            const isLeaf = node.level === 1;
             return (
               <tr key={node.key} className="group">
                 <td
@@ -355,68 +274,48 @@ function Matrix({
                   style={{ paddingLeft: depth * 18 + 4 }}
                 >
                   <div className="flex items-center gap-1.5">
-                    {canExpand ? (
+                    {!isLeaf ? (
                       <button
                         onClick={() => toggle(node.key)}
                         className="flex h-4 w-4 items-center justify-center text-ink-400 hover:text-ink-900"
                         aria-label={expanded.has(node.key) ? "Colapsar" : "Expandir"}
                       >
-                        <CaretRight
-                          size={12}
-                          weight="bold"
-                          className={`transition-transform ${expanded.has(node.key) ? "rotate-90" : ""}`}
-                        />
+                        <CaretRight size={12} weight="bold" className={`transition-transform ${expanded.has(node.key) ? "rotate-90" : ""}`} />
                       </button>
                     ) : (
                       <span className="w-4" />
                     )}
-                    <span
-                      className={`text-[13px] ${
-                        node.level === 0
-                          ? "font-semibold text-ink-900"
-                          : node.level === 1
-                            ? "font-medium text-ink-700"
-                            : "text-ink-700"
-                      }`}
-                    >
-                      {node.label}
-                    </span>
-                    {isLeaf && node.cargo && (
-                      <span className="text-[11px] text-ink-400">· {node.cargo}</span>
+                    {isLeaf && node.evaluadoId ? (
+                      <button
+                        onClick={() => {
+                          const p = personaById.get(node.evaluadoId!);
+                          if (p) onPick(p);
+                        }}
+                        className="text-left text-[13px] text-ink-700 hover:text-brand-600"
+                      >
+                        {node.label}
+                        {node.cargo && <span className="ml-1.5 text-[11px] text-ink-400">· {node.cargo}</span>}
+                      </button>
+                    ) : (
+                      <span className="text-[13px] font-semibold text-ink-900">{node.label}</span>
                     )}
                   </div>
                 </td>
-                {periods.map((p) => {
-                  const v = node.indice[p] ?? null;
-                  const cell = (
-                    <span
-                      className={`inline-block min-w-[52px] rounded-[6px] px-2 py-0.5 text-center tnum font-mono text-[12px] font-medium ${toneBg(v)}`}
-                    >
-                      {score(v)}
+                <td className="border-b border-line-soft py-2 text-center group-hover:bg-line-soft/50">
+                  <span className={`inline-block min-w-[46px] rounded-[6px] px-2 py-0.5 tnum font-mono text-[12px] font-semibold ${toneBg(node.indice)}`}>
+                    {score(node.indice)}
+                  </span>
+                </td>
+                {competencias.map((c) => (
+                  <td key={c.id} className="border-b border-line-soft py-2 text-center group-hover:bg-line-soft/50">
+                    <span className={`tnum font-mono text-[12px] ${toneBg(node.porCompetencia[c.id] ?? null).replace(/bg-\S+/, "")}`}>
+                      {score(node.porCompetencia[c.id] ?? null)}
                     </span>
-                  );
-                  return (
-                    <td
-                      key={p}
-                      className="border-b border-line-soft py-2 text-center align-middle group-hover:bg-line-soft/50"
-                    >
-                      {isLeaf && v !== null && node.evaluadoId ? (
-                        <button
-                          onClick={() => {
-                            const ev = evaluadoById.get(node.evaluadoId!);
-                            if (ev) onPick(ev, p);
-                          }}
-                          className="transition-transform hover:scale-[1.04]"
-                          title="Ver detalle"
-                        >
-                          {cell}
-                        </button>
-                      ) : (
-                        cell
-                      )}
-                    </td>
-                  );
-                })}
+                  </td>
+                ))}
+                <td className="border-b border-line-soft py-2 text-center text-[11px] text-ink-500 group-hover:bg-line-soft/50">
+                  {node.esperados ? `${node.respondientes}/${node.esperados}` : "–"}
+                </td>
               </tr>
             );
           })}

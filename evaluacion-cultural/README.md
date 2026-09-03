@@ -1,54 +1,56 @@
-# Evaluación cultural · Panel de evaluados
+# Evaluación cultural 2026 · Panel de resultados
 
-Plataforma web para medir la **cultura organizacional** por persona y dimensión. Reutiliza
-la misma herramienta y el mismo sistema de diseño del panel de headcount, pero con su
-propio dominio: lo único que cambia son **los evaluados** y los valores culturales medidos.
+Plataforma de **evaluación cultural 360° ascendente** para el equipo de ventas: cada nivel
+evalúa a sus líderes en 5 competencias, y el dashboard consolida los resultados por persona,
+competencia, nivel, área y región. Replica la herramienta y el cuestionario de la evaluación
+cultural original, con el padrón real de la organización.
 
-Es una **versión estándar y autónoma**: funciona de inmediato con datos de ejemplo y
-guarda las ediciones en el navegador (localStorage). No requiere backend para revisarla.
+Versión estándar y autónoma: funciona de inmediato con el padrón real + respuestas de ejemplo,
+y guarda las ediciones en el navegador (localStorage). La capa de datos está aislada para
+conectar un backend real (p. ej. Supabase) sin tocar la interfaz.
+
+## Modelo
+
+- **Padrón**: 96 personas (hoja *Base de Evaluados*), con DNI, cargo, gerencia, área, nivel y región.
+- **Niveles**: N1 Gerente · N2 Regional / Líder de producto · N3 Jefe / Supervisor · N4 Vendedor.
+- **Evaluados** (reciben evaluación): N1, N2 y N3. Los **N4 son evaluadores**.
+- **Relación (ascendente):**
+  - N4 → evalúan a los **N3** de su misma **área/segmento** (Detalle, LPC, Supermercado, Home Care).
+  - N3 → evalúan a su **N2** de la misma **región** (donde hay región disponible).
+  - N2 → evalúan al **N1 Gerente**.
+- **Competencias**: Creatividad, Autonomía, Competitividad, Empatía, Integración.
+- **Cuestionario** (conductas observables, replicadas del original), por audiencia:
+  - Colaborador: 1 pregunta por competencia.
+  - Jefatura / Líderes: hasta 4 preguntas por competencia (20 activas).
+- **Escala** 1–5 (Nunca · Rara vez · A veces · Frecuentemente · Siempre). Editable.
+- **Índice cultural** de un evaluado = promedio de sus competencias. **Brecha (Δ)** = índice − meta.
+  Las respuestas son **anónimas y agregadas**.
 
 ## Módulos
 
 | Ruta | Qué hace |
 | --- | --- |
-| `/` | Dashboard: KPIs (índice cultural, brecha vs meta, cobertura, dimensión más baja), evolución del índice por trimestre contra la meta, puntaje por dimensión (barras o radar), ranking de evaluados y la matriz jerárquica Empresa → Área → Evaluado con el índice por trimestre. Clic en cualquier celda abre el detalle de la persona. |
-| `/evaluaciones` | Carga de calificaciones: edición directa del puntaje (1–5) por evaluado y dimensión, descarga de plantilla `.xlsx`, importación y exportación por periodo. |
-| `/metas` | Objetivo de puntaje por dimensión y año, editable con stepper. Alimenta el cálculo de brechas del dashboard. |
-| `/configuracion` | Reglas de homologación: agrupa un nombre histórico (empresa, área o cargo) bajo el nombre nuevo en todo el dashboard, sin tocar los registros. Ignora tildes, mayúsculas y espacios. |
-| `/accesos` | Gestión de administradores autorizados. |
+| `/` | Dashboard de resultados: KPIs (índice, brecha, participación, competencia más baja), radar y barras por competencia, ranking de evaluados y matriz Área → Evaluado con puntaje por competencia y participación. Clic en un evaluado abre su detalle. |
+| `/evaluar` | Registrar una evaluación: elige a la persona evaluada y responde cada conducta observable (1–5). Suma a los resultados de forma anónima. |
+| `/configuracion` | Pestañas **Preguntas** (activar/desactivar y editar por competencia y audiencia) y **Personas** (editar el padrón, nivel, área y región). |
+| `/metas` | Objetivo de puntaje por competencia. |
+| `/accesos` | Administradores autorizados. |
 | `/login` | Acceso administrativo. |
-
-## Modelo de datos
-
-- **Evaluado**: persona evaluada (nombre, empresa, área, cargo).
-- **Dimensión**: valor cultural medido en escala 1–5 (Integridad, Trabajo en equipo, Orientación al cliente, Innovación, Compromiso, Comunicación, Liderazgo, Adaptabilidad).
-- **Evaluación**: puntaje de un evaluado en una dimensión, en un periodo (cierre trimestral).
-- **Meta**: objetivo de puntaje por dimensión y año.
-- El **índice cultural** de un evaluado es el promedio de sus dimensiones. La **brecha (Δ)** es `índice − meta`.
-
-## Escala
-
-| 1 | 2 | 3 | 4 | 5 |
-| --- | --- | --- | --- | --- |
-| En desarrollo | Básico | Competente | Destacado | Referente |
 
 ## Acceso de administrador
 
-La administradora principal es **astrid.sevillap@gmail.com** (`OWNER_EMAIL` en `src/lib/seed.ts`).
-Desde `/login` ingresa con ese correo y desde `/accesos` puede autorizar a otras personas.
+Administradora principal: **astrid.sevillap@gmail.com** (`OWNER_EMAIL` en `src/lib/seed.ts`).
+Ingresa en `/login` con ese correo; desde `/accesos` autoriza a otras personas.
 
-> La autenticación de esta versión estándar es una **puerta de demostración** basada en
-> localStorage (valida el correo contra la lista de autorizados, en el navegador). No es
-> seguridad real. Para producción se conecta un proveedor de identidad (p. ej. Supabase
-> Auth) y se validan los administradores en el servidor — la capa de datos está aislada en
-> `src/lib/data.ts` y `src/lib/auth.ts` para facilitar ese reemplazo.
+> Autenticación de demostración (valida el correo contra la lista de autorizados en el
+> navegador). Para producción se conecta un proveedor de identidad real.
 
 ## Stack
 
 - **Next.js 15** (App Router) + **Tailwind CSS v4**, tipografía Geist, iconos Phosphor.
-- **Recharts** para gráficos (evolución, barras, radar).
-- **SheetJS (xlsx)** para plantillas, importación y exportación de Excel.
-- Datos semilla en `src/lib/seed.ts`; ediciones persistidas en localStorage vía `src/lib/data.ts`.
+- **Recharts** para radar y barras por competencia.
+- Padrón real en `src/lib/roster.ts` (generado desde `Encuesta_Ventas.xlsx`); cuestionario en
+  `src/lib/seed.ts`; agregaciones y persistencia en `src/lib/data.ts`.
 
 ## Desarrollo local
 
@@ -58,9 +60,8 @@ npm install
 npm run dev
 ```
 
-Abre http://localhost:3000.
+## Personalizar
 
-## Personalizar los evaluados
-
-Edite la lista `EVALUADOS` en `src/lib/seed.ts` (o cargue una plantilla desde `/evaluaciones`).
-Las dimensiones culturales se definen en `DIMENSIONES` del mismo archivo.
+- **Personas**: edita el padrón en `/configuracion → Personas` o el archivo `src/lib/roster.ts`.
+- **Preguntas / competencias**: `/configuracion → Preguntas` o `src/lib/seed.ts`.
+- **¿Evaluar también a los N4?** cambia `EVALUAR_NIVELES` en `src/lib/data.ts`.

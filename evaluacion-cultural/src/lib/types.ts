@@ -1,89 +1,85 @@
-/* Modelo de dominio · Evaluación cultural */
+/* Modelo de dominio · Evaluación cultural 2026 (encuesta 360 ascendente) */
 
-/** Persona evaluada en la organización */
-export type Evaluado = {
+/** Nivel jerárquico: 1 Gerente · 2 Regional/Líder de producto · 3 Jefe/Supervisor · 4 Vendedor */
+export type Nivel = 1 | 2 | 3 | 4;
+
+/** Persona del padrón (puede ser evaluada, evaluadora o ambas). */
+export type Persona = {
   id: string;
+  dni: string;
   nombre: string;
-  empresa: string;
-  area: string;
   cargo: string;
-  activo: boolean;
+  gerencia: string;
+  area: string;
+  nivel: Nivel;
+  region: string;
 };
 
-/** Dimensión o valor cultural que se mide (escala 1–5) */
-export type Dimension = {
+/** Competencia cultural evaluada. */
+export type Competencia = {
   id: string;
   nombre: string;
-  descripcion: string;
+};
+
+/** Audiencia del cuestionario según el rol del evaluado. */
+export type Audiencia = "colaborador" | "lider";
+
+/** Conducta observable (pregunta) de una competencia, para una audiencia. */
+export type Pregunta = {
+  id: string;
+  competenciaId: string;
+  audiencia: Audiencia;
+  texto: string;
+  activa: boolean;
+};
+
+/** Meta (objetivo) de puntaje por competencia. Escala 1–5. */
+export type Meta = {
+  competenciaId: string;
+  objetivo: number;
 };
 
 /**
- * Una calificación: el puntaje de un evaluado en una dimensión, en un periodo.
- * `score` va de 1 a 5. El promedio de las dimensiones de un evaluado es su
- * índice cultural del periodo.
+ * Resultado agregado: suma de puntajes y número de respuestas recibidas por un
+ * evaluado en una pregunta. El promedio es sum / n. Se mantiene agregado para
+ * que las respuestas sean anónimas y el almacenamiento sea liviano.
  */
-export type Evaluacion = {
+export type Resultado = {
   evaluadoId: string;
-  period: string; // 'YYYY-MM' (primer día del trimestre evaluado)
-  dimensionId: string;
-  score: number; // 1..5
+  preguntaId: string;
+  sum: number;
+  n: number;
 };
 
-/** Meta (objetivo) de puntaje por dimensión y año */
-export type Meta = {
-  anio: number;
-  dimensionId: string;
-  objetivo: number; // 1..5
-};
-
-/** Regla de homologación: agrupa un nombre histórico bajo uno nuevo */
-export type MergeCampo = "empresa" | "area" | "cargo";
-export type MergeRule = {
-  id: string;
-  campo: MergeCampo;
-  origen: string;
-  destino: string;
-  activo: boolean;
-  nota: string;
-};
-
-/** Administrador autorizado */
+/** Administrador autorizado. */
 export type Admin = {
   email: string;
   role: "owner" | "editor";
   active: boolean;
 };
 
-/* ---------- Vistas agregadas para el dashboard ---------- */
+/* ---------- vistas agregadas ---------- */
 
-/** Nodo de la matriz Empresa → Área → Evaluado */
+export type CompetenciaScore = {
+  competenciaId: string;
+  nombre: string;
+  score: number; // promedio 1–5 (0 si sin datos)
+  objetivo: number;
+  n: number; // respuestas que lo sustentan
+};
+
+/** Nodo de la matriz Área → Evaluado. */
 export type MatrixNode = {
   key: string;
   label: string;
-  level: 0 | 1 | 2;
-  empresa: string;
-  area?: string;
+  level: 0 | 1; // 0 = área, 1 = evaluado
+  area: string;
   evaluadoId?: string;
   cargo?: string;
-  /** índice cultural por periodo (promedio de dimensiones) */
-  indice: Record<string, number | null>;
-  /** nº de evaluados que componen el nodo (para promediar) */
-  count: Record<string, number>;
-  children: MatrixNode[];
-};
-
-/** Puntaje agregado por dimensión en un periodo */
-export type DimensionScore = {
-  dimensionId: string;
-  nombre: string;
-  score: number;
-  objetivo: number;
-};
-
-/** Punto de evolución del índice general por periodo */
-export type EvolutionPoint = {
-  period: string;
-  label: string;
+  nivel?: Nivel;
   indice: number | null;
-  objetivo: number | null;
+  porCompetencia: Record<string, number | null>;
+  respondientes: number;
+  esperados: number;
+  children: MatrixNode[];
 };

@@ -1,13 +1,10 @@
 "use client";
 
 import {
-  Area,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
-  ComposedChart,
-  Line,
   PolarAngleAxis,
   PolarGrid,
   PolarRadiusAxis,
@@ -20,7 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { score, signedScore } from "@/lib/format";
-import type { DimensionScore, EvolutionPoint } from "@/lib/types";
+import type { CompetenciaScore } from "@/lib/types";
 
 /* Paleta: azul de marca + rojo semántico, referencia neutra para la meta. */
 export const C = {
@@ -76,14 +73,10 @@ function Panel({ title, rows }: { title: string; rows: TooltipRow[] }) {
         {rows.map((r) => (
           <div key={r.name} className="flex items-center justify-between gap-6">
             <span className="flex items-center gap-1.5 text-[12px] text-ink-500">
-              {r.color && (
-                <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />
-              )}
+              {r.color && <span className="h-2 w-2 rounded-full" style={{ background: r.color }} />}
               {r.name}
             </span>
-            <span className="tnum font-mono text-[12px] font-medium text-ink-900">
-              {r.value}
-            </span>
+            <span className="tnum font-mono text-[12px] font-medium text-ink-900">{r.value}</span>
           </div>
         ))}
       </div>
@@ -91,100 +84,13 @@ function Panel({ title, rows }: { title: string; rows: TooltipRow[] }) {
   );
 }
 
-/* ---------- evolución del índice cultural ---------- */
+/* ---------- comparativo por competencia ---------- */
 
-export function EvolutionChart({ data }: { data: EvolutionPoint[] }) {
-  const lastIdx = (() => {
-    for (let i = data.length - 1; i >= 0; i--) if (data[i].indice !== null) return i;
-    return -1;
-  })();
-
-  return (
-    <ResponsiveContainer width="100%" height={280}>
-      <ComposedChart data={data} margin={{ top: 18, right: 46, bottom: 4, left: 0 }}>
-        <CartesianGrid stroke={C.grid} strokeWidth={1} vertical={false} />
-        <XAxis
-          dataKey="label"
-          tick={AXIS_TICK}
-          tickLine={false}
-          axisLine={{ stroke: C.grid }}
-          interval={0}
-        />
-        <YAxis
-          domain={[1, 5]}
-          ticks={[1, 2, 3, 4, 5]}
-          tick={AXIS_TICK}
-          tickLine={false}
-          axisLine={false}
-          width={28}
-        />
-        <Tooltip
-          cursor={{ stroke: C.tick, strokeWidth: 1 }}
-          content={({ active, payload, label }) => {
-            if (!active || !payload?.length) return null;
-            const p = payload[0]?.payload as EvolutionPoint;
-            const rows: TooltipRow[] = [];
-            if (p.indice !== null)
-              rows.push({ name: "Índice", value: score(p.indice), color: C.brand });
-            if (p.objetivo !== null)
-              rows.push({ name: "Meta", value: score(p.objetivo), color: C.ref });
-            if (p.indice !== null && p.objetivo !== null)
-              rows.push({ name: "Brecha", value: signedScore(p.indice - p.objetivo) });
-            return <Panel title={String(label)} rows={rows} />;
-          }}
-        />
-        <Line
-          type="linear"
-          dataKey="objetivo"
-          stroke={C.ref}
-          strokeWidth={1.5}
-          strokeDasharray="4 4"
-          dot={false}
-          activeDot={false}
-          isAnimationActive={false}
-        />
-        <Area
-          type="monotone"
-          dataKey="indice"
-          stroke={C.brand}
-          strokeWidth={2}
-          strokeLinejoin="round"
-          strokeLinecap="round"
-          fill={C.brandFill}
-          isAnimationActive={false}
-          dot={{ r: 3.5, fill: C.brand, stroke: "#fefefe", strokeWidth: 2 }}
-          activeDot={{ r: 5, fill: C.brand, stroke: "#fefefe", strokeWidth: 2 }}
-          label={(props: unknown) => {
-            const { x, y, index, value } = props as {
-              x: number;
-              y: number;
-              index: number;
-              value: number | null;
-            };
-            if (index !== lastIdx || value === null) return <g />;
-            return (
-              <text x={x} y={y - 12} textAnchor="middle" fontSize={11.5} fontWeight={600} fill={C.ink}>
-                {score(value)}
-              </text>
-            );
-          }}
-        />
-      </ComposedChart>
-    </ResponsiveContainer>
-  );
-}
-
-/* ---------- comparativo por dimensión ---------- */
-
-export function DimensionBars({ data }: { data: DimensionScore[] }) {
+export function CompetenciaBars({ data }: { data: CompetenciaScore[] }) {
   const meta = data[0]?.objetivo ?? 4;
   return (
-    <ResponsiveContainer width="100%" height={Math.max(240, data.length * 38)}>
-      <BarChart
-        data={data}
-        layout="vertical"
-        margin={{ top: 4, right: 40, bottom: 4, left: 8 }}
-      >
+    <ResponsiveContainer width="100%" height={Math.max(200, data.length * 42)}>
+      <BarChart data={data} layout="vertical" margin={{ top: 4, right: 40, bottom: 4, left: 8 }}>
         <CartesianGrid stroke={C.grid} strokeWidth={1} horizontal={false} />
         <XAxis
           type="number"
@@ -197,7 +103,7 @@ export function DimensionBars({ data }: { data: DimensionScore[] }) {
         <YAxis
           type="category"
           dataKey="nombre"
-          width={140}
+          width={120}
           tick={{ fontSize: 12, fill: C.ink }}
           tickLine={false}
           axisLine={false}
@@ -206,7 +112,7 @@ export function DimensionBars({ data }: { data: DimensionScore[] }) {
           cursor={{ fill: "rgba(23,23,26,0.03)" }}
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
-            const p = payload[0]?.payload as DimensionScore;
+            const p = payload[0]?.payload as CompetenciaScore;
             return (
               <Panel
                 title={p.nombre}
@@ -214,17 +120,18 @@ export function DimensionBars({ data }: { data: DimensionScore[] }) {
                   { name: "Puntaje", value: score(p.score), color: C.brand },
                   { name: "Meta", value: score(p.objetivo), color: C.ref },
                   { name: "Brecha", value: signedScore(p.score - p.objetivo) },
+                  { name: "Respuestas", value: String(p.n) },
                 ]}
               />
             );
           }}
         />
         <ReferenceLine x={meta} stroke={C.ref} strokeDasharray="4 4" strokeWidth={1.5} />
-        <Bar dataKey="score" barSize={16} radius={[0, 4, 4, 0]} isAnimationActive={false}>
+        <Bar dataKey="score" barSize={18} radius={[0, 4, 4, 0]} isAnimationActive={false}>
           {data.map((d) => {
             const gap = d.score - d.objetivo;
-            const color = gap >= 0 ? C.brand : gap >= -0.5 ? C.warn : C.danger;
-            return <Cell key={d.dimensionId} fill={color} />;
+            const color = d.score === 0 ? "#c9c9cf" : gap >= 0 ? C.brand : gap >= -0.5 ? C.warn : C.danger;
+            return <Cell key={d.competenciaId} fill={color} />;
           })}
         </Bar>
       </BarChart>
@@ -232,19 +139,19 @@ export function DimensionBars({ data }: { data: DimensionScore[] }) {
   );
 }
 
-/* ---------- radar por dimensión ---------- */
+/* ---------- radar por competencia ---------- */
 
-export function DimensionRadar({ data }: { data: DimensionScore[] }) {
+export function CompetenciaRadar({ data }: { data: CompetenciaScore[] }) {
   return (
     <ResponsiveContainer width="100%" height={320}>
-      <RadarChart data={data} margin={{ top: 12, right: 24, bottom: 12, left: 24 }}>
+      <RadarChart data={data} margin={{ top: 12, right: 30, bottom: 12, left: 30 }}>
         <PolarGrid stroke={C.grid} />
-        <PolarAngleAxis dataKey="nombre" tick={{ fontSize: 11, fill: C.ink }} />
+        <PolarAngleAxis dataKey="nombre" tick={{ fontSize: 11.5, fill: C.ink }} />
         <PolarRadiusAxis domain={[0, 5]} tick={{ fontSize: 10, fill: C.tick }} axisLine={false} />
         <Tooltip
           content={({ active, payload }) => {
             if (!active || !payload?.length) return null;
-            const p = payload[0]?.payload as DimensionScore;
+            const p = payload[0]?.payload as CompetenciaScore;
             return (
               <Panel
                 title={p.nombre}
@@ -256,23 +163,8 @@ export function DimensionRadar({ data }: { data: DimensionScore[] }) {
             );
           }}
         />
-        <Radar
-          name="Meta"
-          dataKey="objetivo"
-          stroke={C.ref}
-          strokeDasharray="4 4"
-          fill="none"
-          isAnimationActive={false}
-        />
-        <Radar
-          name="Puntaje"
-          dataKey="score"
-          stroke={C.brand}
-          strokeWidth={2}
-          fill={C.brandFill}
-          fillOpacity={1}
-          isAnimationActive={false}
-        />
+        <Radar name="Meta" dataKey="objetivo" stroke={C.ref} strokeDasharray="4 4" fill="none" isAnimationActive={false} />
+        <Radar name="Puntaje" dataKey="score" stroke={C.brand} strokeWidth={2} fill={C.brandFill} fillOpacity={1} isAnimationActive={false} />
       </RadarChart>
     </ResponsiveContainer>
   );

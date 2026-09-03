@@ -7,13 +7,13 @@ import { currentEmail, isAdmin as checkAdmin, signOut } from "@/lib/auth";
 
 const NAV = [
   { href: "/", label: "Dashboard" },
-  { href: "/evaluaciones", label: "Evaluaciones", admin: true },
-  { href: "/metas", label: "Metas", admin: true },
+  { href: "/evaluar", label: "Evaluar", admin: true },
   { href: "/configuracion", label: "Configuración", admin: true },
+  { href: "/metas", label: "Metas", admin: true },
   { href: "/accesos", label: "Accesos", admin: true },
 ];
 
-const ADMIN_PREFIXES = ["/evaluaciones", "/metas", "/configuracion", "/accesos"];
+const ADMIN_PREFIXES = ["/evaluar", "/metas", "/configuracion", "/accesos"];
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
