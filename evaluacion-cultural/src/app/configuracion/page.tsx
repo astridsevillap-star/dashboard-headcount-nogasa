@@ -45,7 +45,7 @@ export default function ConfiguracionPage() {
 /* ---------------- Preguntas ---------------- */
 
 function Preguntas({ push }: { push: (k: "ok" | "error", t: string) => void }) {
-  const [audiencia, setAudiencia] = useState<Audiencia>("lider");
+  const [audiencia, setAudiencia] = useState<Audiencia>("general");
   const [version, setVersion] = useState(0);
   const [nuevaComp, setNuevaComp] = useState(competencias[0].id);
   const [nuevoTexto, setNuevoTexto] = useState("");
@@ -97,8 +97,8 @@ function Preguntas({ push }: { push: (k: "ok" | "error", t: string) => void }) {
           value={audiencia}
           onChange={setAudiencia}
           options={[
-            { value: "lider", label: "Jefatura / Líderes" },
-            { value: "colaborador", label: "Colaborador" },
+            { value: "general", label: "Nivel 2·3·4 (8 preguntas)" },
+            { value: "gerencial", label: "Nivel 1 · Gerente (20)" },
           ]}
         />
         <span className="text-[12px] text-ink-500">

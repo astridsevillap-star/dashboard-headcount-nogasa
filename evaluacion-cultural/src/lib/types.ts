@@ -21,8 +21,12 @@ export type Competencia = {
   nombre: string;
 };
 
-/** Audiencia del cuestionario según el rol del evaluado. */
-export type Audiencia = "colaborador" | "lider";
+/**
+ * Audiencia del cuestionario según el nivel del evaluado.
+ * · "gerencial" (20 preguntas): solo el Gerente (Nivel 1).
+ * · "general" (8 preguntas): Niveles 2, 3 y 4 (todos los demás).
+ */
+export type Audiencia = "gerencial" | "general";
 
 /** Conducta observable (pregunta) de una competencia, para una audiencia. */
 export type Pregunta = {

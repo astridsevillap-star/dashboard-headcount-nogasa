@@ -44,7 +44,9 @@ export type Store = {
 /* ---------- relaciones (dependen solo del padrón) ---------- */
 
 export function audienciaDe(nivel: Nivel): Audiencia {
-  return nivel === 4 ? "colaborador" : "lider";
+  // Solo el Gerente (N1) usa el cuestionario gerencial de 20 preguntas;
+  // N2, N3 y N4 usan el general de 8.
+  return nivel === 1 ? "gerencial" : "general";
 }
 
 export function esEvaluado(p: Persona): boolean {

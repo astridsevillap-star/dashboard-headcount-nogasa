@@ -1,12 +1,11 @@
-import type { Admin, Competencia, Meta, Pregunta } from "./types";
+import type { Admin, Audiencia, Competencia, Meta, Pregunta } from "./types";
 
 /* ---------------------------------------------------------------------------
    Contenido del cuestionario · Evaluación cultural 2026
    Competencias y conductas observables replicadas de la encuesta original.
-   Dos audiencias:
-     · "colaborador" (Equipo): 1 pregunta por competencia.
-     · "lider" (Jefatura / Líderes): hasta 4 preguntas por competencia.
-   La audiencia de cada evaluado se decide por su nivel jerárquico.
+   Dos cuestionarios, según el nivel del evaluado:
+     · "gerencial" (20 preguntas, 4 por competencia): solo el Gerente (Nivel 1).
+     · "general" (8 preguntas): Niveles 2, 3 y 4 (todos los demás).
 --------------------------------------------------------------------------- */
 
 export const OWNER_EMAIL = "astrid.sevillap@gmail.com";
@@ -38,53 +37,47 @@ export const EDICION = "2026";
 let seq = 0;
 const q = (
   competenciaId: string,
-  audiencia: "colaborador" | "lider",
+  audiencia: Audiencia,
   texto: string,
   activa = true
 ): Pregunta => ({ id: `q${++seq}`, competenciaId, audiencia, texto, activa });
 
 export const PREGUNTAS: Pregunta[] = [
-  /* ---- Audiencia colaborador (1 por competencia) ---- */
-  q("creatividad", "colaborador", "Propone y pone en práctica mejoras que simplifican procesos o elevan la experiencia de las personas."),
-  q("autonomia", "colaborador", "Toma decisiones oportunas dentro de su responsabilidad y asume los resultados de sus acciones."),
-  q("competitividad", "colaborador", "Cumple sus compromisos con calidad y agilidad, incluso ante imprevistos o alta carga de trabajo."),
-  q("empatia", "colaborador", "Escucha para comprender la necesidad real y responde con respeto e interés genuino."),
-  q("integracion", "colaborador", "Coordina y comparte información con otras personas o áreas para alcanzar resultados colectivos."),
+  /* ===== Cuestionario NIVEL 1 · Gerente (20 preguntas, 4 por competencia) ===== */
+  q("creatividad", "gerencial", "Crea un entorno donde la experimentación y la creatividad son reconocidas y recompensadas."),
+  q("creatividad", "gerencial", "Cuando alguien de su equipo propone una idea innovadora, la impulsa y ayuda a concretarla."),
+  q("creatividad", "gerencial", "Estimula a su equipo a generar nuevas ideas y métodos de trabajo."),
+  q("creatividad", "gerencial", "Propone regularmente ideas creativas sobre procesos, productos o procedimientos."),
 
-  /* ---- Audiencia líder · Creatividad ---- */
-  q("creatividad", "lider", "Crea un entorno donde la experimentación y la creatividad son reconocidas y recompensadas."),
-  q("creatividad", "lider", "Cuando alguien de su equipo propone una idea innovadora, la impulsa y ayuda a concretarla."),
-  q("creatividad", "lider", "Estimula a su equipo a generar nuevas ideas y métodos de trabajo."),
-  q("creatividad", "lider", "Propone regularmente ideas creativas sobre procesos, productos o procedimientos."),
-  q("creatividad", "lider", "Crea un entorno donde las ideas nuevas se prueban, se reconocen y se convierten en mejoras concretas.", false),
+  q("autonomia", "gerencial", "Delega responsabilidades que representan oportunidades reales de crecimiento para su equipo."),
+  q("autonomia", "gerencial", "Asegura que los miembros de su equipo tengan acceso a oportunidades de desarrollo personal y profesional."),
+  q("autonomia", "gerencial", "Al empoderar a otros, genera un clima motivador que energiza a todo el equipo."),
+  q("autonomia", "gerencial", "Prepara activamente a sus colaboradores para asumir roles de mayor responsabilidad."),
 
-  /* ---- Audiencia líder · Autonomía ---- */
-  q("autonomia", "lider", "Delega responsabilidades que representan oportunidades reales de crecimiento para su equipo."),
-  q("autonomia", "lider", "Asegura que los miembros de su equipo tengan acceso a oportunidades de desarrollo personal y profesional."),
-  q("autonomia", "lider", "Al empoderar a otros, genera un clima motivador que energiza a todo el equipo."),
-  q("autonomia", "lider", "Prepara activamente a sus colaboradores para asumir roles de mayor responsabilidad."),
-  q("autonomia", "lider", "Delega responsabilidades que desarrollan al equipo y prepara personas para asumir mayor responsabilidad.", false),
+  q("competitividad", "gerencial", "Establece metas ambiciosas que desafían a su equipo a superar los estándares habituales."),
+  q("competitividad", "gerencial", "Motiva e impulsa a otros a dar lo mejor de sí en su trabajo."),
+  q("competitividad", "gerencial", "Orienta a su área hacia niveles de rendimiento de excelencia en productos y/o servicios."),
+  q("competitividad", "gerencial", "Promueve una cultura de mejora continua dentro de su área."),
 
-  /* ---- Audiencia líder · Competitividad ---- */
-  q("competitividad", "lider", "Establece metas ambiciosas que desafían a su equipo a superar los estándares habituales."),
-  q("competitividad", "lider", "Motiva e impulsa a otros a dar lo mejor de sí en su trabajo."),
-  q("competitividad", "lider", "Orienta a su área hacia niveles de rendimiento de excelencia en productos y/o servicios."),
-  q("competitividad", "lider", "Promueve una cultura de mejora continua dentro de su área."),
-  q("competitividad", "lider", "Establece metas exigentes e impulsa la mejora continua del área.", false),
+  q("empatia", "gerencial", "Se comunica de manera empática cuando las personas de su equipo comparten sus problemas."),
+  q("empatia", "gerencial", "Cuando da retroalimentación, lo hace de forma que impulsa la mejora en lugar de generar defensividad."),
+  q("empatia", "gerencial", "Escucha de manera abierta y atenta las ideas de otros, incluso cuando no está de acuerdo."),
+  q("empatia", "gerencial", "Genera confianza y apertura demostrando comprensión genuina ante las preocupaciones de su equipo."),
 
-  /* ---- Audiencia líder · Empatía ---- */
-  q("empatia", "lider", "Se comunica de manera empática cuando las personas de su equipo comparten sus problemas."),
-  q("empatia", "lider", "Cuando da retroalimentación, lo hace de forma que impulsa la mejora en lugar de generar defensividad."),
-  q("empatia", "lider", "Escucha de manera abierta y atenta las ideas de otros, incluso cuando no está de acuerdo."),
-  q("empatia", "lider", "Genera confianza y apertura demostrando comprensión genuina ante las preocupaciones de su equipo."),
-  q("empatia", "lider", "Escucha con apertura y brinda retroalimentación que genera confianza y mejora.", false),
+  q("integracion", "gerencial", "Construye equipos cohesionados con sentido de compromiso compartido."),
+  q("integracion", "gerencial", "Crea un ambiente donde la participación en las decisiones es activamente fomentada."),
+  q("integracion", "gerencial", "Coordina de manera regular con líderes de otras áreas de la organización."),
+  q("integracion", "gerencial", "Al liderar grupos, asegura la colaboración y la resolución positiva de conflictos."),
 
-  /* ---- Audiencia líder · Integración ---- */
-  q("integracion", "lider", "Construye equipos cohesionados con sentido de compromiso compartido."),
-  q("integracion", "lider", "Crea un ambiente donde la participación en las decisiones es activamente fomentada."),
-  q("integracion", "lider", "Coordina de manera regular con líderes de otras áreas de la organización."),
-  q("integracion", "lider", "Al liderar grupos, asegura la colaboración y la resolución positiva de conflictos."),
-  q("integracion", "lider", "Construye un equipo cohesionado y coordina activamente con otras áreas para resolver desafíos compartidos.", false),
+  /* ===== Cuestionario NIVEL 2·3·4 · resto (8 preguntas) ===== */
+  q("creatividad", "general", "Propone soluciones creativas sobre procesos o procedimientos en favor de tu gestión."),
+  q("creatividad", "general", "Lidera y promueve la mejora continua en la organización."),
+  q("autonomia", "general", "Promueve que los colaboradores tengan acceso a oportunidades de desarrollo personal y profesional."),
+  q("competitividad", "general", "Resuelve tu solicitud en los plazos prometidos."),
+  q("empatia", "general", "Ofrece un trato amable y cortés."),
+  q("empatia", "general", "Se comunica de manera empática cuando las personas de su equipo comparten sus problemas."),
+  q("empatia", "general", "Escucha de manera abierta y atenta las ideas de otros, incluso cuando no está de acuerdo."),
+  q("integracion", "general", "Coordina de manera regular con tu área respecto a las necesidades del negocio."),
 ];
 
 const META_DEFAULT = 4.0;
