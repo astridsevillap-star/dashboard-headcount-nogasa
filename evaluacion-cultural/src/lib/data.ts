@@ -98,6 +98,21 @@ function mulberry32(seed: number): () => number {
 }
 const clamp = (v: number) => Math.max(1, Math.min(5, v));
 
+/** Promedio (1–5) de una distribución de frecuencias. null si no hay respuestas. */
+export function avgOf(dist: number[]): number | null {
+  const n = dist.reduce((a, b) => a + b, 0);
+  if (n === 0) return null;
+  let s = 0;
+  for (let k = 0; k < dist.length; k++) s += (k + 1) * dist[k];
+  return s / n;
+}
+export const nOf = (dist: number[]): number => dist.reduce((a, b) => a + b, 0);
+/** Resultado en escala 0–100 % (promedio / 5 · 100), como en la referencia. */
+export function pctOf(dist: number[]): number | null {
+  const avg = avgOf(dist);
+  return avg === null ? null : Math.round((avg / 5) * 100);
+}
+
 function seedResultados(personas: Persona[], preguntas: Pregunta[]): {
   resultados: Resultado[];
   submissions: Record<string, number>;
@@ -116,14 +131,15 @@ function seedResultados(personas: Persona[], preguntas: Pregunta[]): {
     const qs = preguntasActivas(preguntas, audienciaDe(ev.nivel));
     for (const q of qs) {
       const bias = ((hashStr(ev.id + q.competenciaId) % 11) - 5) / 12; // ±0.4
-      const noise = (mulberry32(hashStr(ev.id + q.id))() - 0.5) * 0.5;
-      const avg = clamp(base + bias + noise);
-      resultados.push({
-        evaluadoId: ev.id,
-        preguntaId: q.id,
-        sum: Math.round(avg * n * 10) / 10,
-        n,
-      });
+      const target = clamp(base + bias);
+      const dist: [number, number, number, number, number] = [0, 0, 0, 0, 0];
+      const r = mulberry32(hashStr(ev.id + q.id));
+      for (let i = 0; i < n; i++) {
+        // muestra alrededor del objetivo con ruido; algunos "no responden" esta conducta
+        const v = clamp(Math.round(target + (r() - 0.5) * 1.6));
+        dist[v - 1] += 1;
+      }
+      resultados.push({ evaluadoId: ev.id, preguntaId: q.id, dist });
     }
   }
   return { resultados, submissions };
@@ -247,9 +263,10 @@ export function competenciaScoresDe(s: Store, evaluado: Persona): CompetenciaSco
     let n = 0;
     for (const q of cqs) {
       const r = resultadoDe(s, evaluado.id, q.id);
-      if (r && r.n > 0) {
-        avgs.push(r.sum / r.n);
-        n += r.n;
+      const a = r ? avgOf(r.dist) : null;
+      if (a !== null && r) {
+        avgs.push(a);
+        n += nOf(r.dist);
       }
     }
     const score = avgs.length ? round1(avgs.reduce((a, b) => a + b, 0) / avgs.length) : 0;
@@ -362,20 +379,24 @@ export function buildMatrix(s: Store, set: Persona[]): MatrixNode[] {
 
 /* ---------- registro de una evaluación ---------- */
 
-/** Registra las respuestas de un evaluador para un evaluado (una submission). */
+/**
+ * Registra las respuestas de un evaluador para un evaluado (una submission).
+ * Solo se registran las conductas con un valor 1–5; las omitidas ("No tengo
+ * suficiente información") no cuentan.
+ */
 export function registrarEvaluacion(evaluadoId: string, respuestas: Record<string, number>) {
   mutate((s) => {
     for (const [preguntaId, valor] of Object.entries(respuestas)) {
-      const v = Math.max(1, Math.min(5, valor));
-      const r = s.resultados.find(
+      if (!valor || valor < 1 || valor > 5) continue;
+      const v = Math.round(valor);
+      let r = s.resultados.find(
         (x) => x.evaluadoId === evaluadoId && x.preguntaId === preguntaId
       );
-      if (r) {
-        r.sum += v;
-        r.n += 1;
-      } else {
-        s.resultados.push({ evaluadoId, preguntaId, sum: v, n: 1 });
+      if (!r) {
+        r = { evaluadoId, preguntaId, dist: [0, 0, 0, 0, 0] };
+        s.resultados.push(r);
       }
+      r.dist[v - 1] += 1;
     }
     s.submissions[evaluadoId] = (s.submissions[evaluadoId] ?? 0) + 1;
   });

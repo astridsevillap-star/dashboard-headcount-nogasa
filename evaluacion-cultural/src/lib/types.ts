@@ -40,15 +40,15 @@ export type Meta = {
 };
 
 /**
- * Resultado agregado: suma de puntajes y número de respuestas recibidas por un
- * evaluado en una pregunta. El promedio es sum / n. Se mantiene agregado para
- * que las respuestas sean anónimas y el almacenamiento sea liviano.
+ * Resultado agregado y anónimo por evaluado y pregunta: distribución de
+ * frecuencias en la escala 1–5. `dist[k]` = nº de evaluadores que marcaron k+1.
+ * Las respuestas "No tengo suficiente información" no se registran (no cuentan).
+ * Promedio = Σ((k+1)·dist[k]) / Σdist. Resultado % = promedio / 5 · 100.
  */
 export type Resultado = {
   evaluadoId: string;
   preguntaId: string;
-  sum: number;
-  n: number;
+  dist: [number, number, number, number, number];
 };
 
 /** Administrador autorizado. */

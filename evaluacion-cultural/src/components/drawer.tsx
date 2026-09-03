@@ -5,14 +5,20 @@ import { createPortal } from "react-dom";
 import { X, Users } from "@phosphor-icons/react";
 import { score, signedScore, pct } from "@/lib/format";
 import {
+  avgOf,
   competenciaScoresDe,
   indiceDe,
   metaGeneral,
+  nOf,
   participacionDe,
+  pctOf,
   preguntasDe,
   type Store,
 } from "@/lib/data";
 import type { Persona } from "@/lib/types";
+
+/* Colores de la escala 1–5 (rojo → azul), como la barra de frecuencias original. */
+const ESCALA_COLORS = ["#c0392b", "#d98a4e", "#9db4e6", "#5b7fd4", "#2f4fb0"];
 
 const toneText = (gap: number | null) =>
   gap === null
@@ -106,18 +112,37 @@ export function EvaluadoDrawer({
                     style={{ width: `${(c.score / 5) * 100}%`, background: toneColor(gap) }}
                   />
                 </div>
-                <ul className="mt-2 flex flex-col gap-1">
+                <ul className="mt-2 flex flex-col gap-2.5">
                   {qcomp.map((q) => {
                     const r = store.resultados.find(
                       (x) => x.evaluadoId === evaluado.id && x.preguntaId === q.id
                     );
-                    const avg = r && r.n > 0 ? r.sum / r.n : null;
+                    const dist = r?.dist ?? [0, 0, 0, 0, 0];
+                    const n = nOf(dist);
+                    const resultado = pctOf(dist);
+                    const prom = avgOf(dist);
                     return (
-                      <li key={q.id} className="flex items-start justify-between gap-3 text-[12px]">
-                        <span className="flex-1 leading-snug text-ink-500">{q.texto}</span>
-                        <span className="tnum shrink-0 font-mono font-medium text-ink-700">
-                          {score(avg)}
-                        </span>
+                      <li key={q.id} className="rounded-[8px] bg-line-soft/50 p-2.5">
+                        <div className="flex items-start justify-between gap-3">
+                          <span className="flex-1 text-[12px] leading-snug text-ink-700">{q.texto}</span>
+                          <span className="tnum shrink-0 font-mono text-[13px] font-semibold text-ink-900">
+                            {resultado === null ? "–" : `${resultado}%`}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-[11px] text-ink-400">
+                          {n} respuesta{n === 1 ? "" : "s"} · promedio {score(prom)}
+                        </p>
+                        <div className="mt-1.5 flex h-2 w-full overflow-hidden rounded-full bg-line">
+                          {dist.map((c, k) =>
+                            c > 0 ? (
+                              <div
+                                key={k}
+                                style={{ width: `${(c / Math.max(n, 1)) * 100}%`, background: ESCALA_COLORS[k] }}
+                                title={`${k + 1}: ${c}`}
+                              />
+                            ) : null
+                          )}
+                        </div>
                       </li>
                     );
                   })}

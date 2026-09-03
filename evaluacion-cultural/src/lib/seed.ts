@@ -26,9 +26,9 @@ export const COMPETENCIAS: Competencia[] = [
 /** Escala de respuesta (1–5). Editable en Configuración. */
 export const ESCALA: { value: number; label: string }[] = [
   { value: 1, label: "Nunca" },
-  { value: 2, label: "Rara vez" },
+  { value: 2, label: "Casi nunca" },
   { value: 3, label: "A veces" },
-  { value: 4, label: "Frecuentemente" },
+  { value: 4, label: "Casi siempre" },
   { value: 5, label: "Siempre" },
 ];
 

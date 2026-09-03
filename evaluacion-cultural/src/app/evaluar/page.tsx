@@ -121,6 +121,16 @@ export default function EvaluarPage() {
                             </button>
                           );
                         })}
+                        <button
+                          onClick={() => setRespuestas((prev) => ({ ...prev, [q.id]: 0 }))}
+                          className={`rounded-[8px] border px-2.5 py-1.5 text-[12px] transition-colors ${
+                            respuestas[q.id] === 0
+                              ? "border-ink-400 bg-line-soft text-ink-700"
+                              : "border-line text-ink-400 hover:border-ink-300 hover:text-ink-700"
+                          }`}
+                        >
+                          No tengo suficiente información
+                        </button>
                       </div>
                     </div>
                   ))}
