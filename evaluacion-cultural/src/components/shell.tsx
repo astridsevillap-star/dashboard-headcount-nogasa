@@ -63,6 +63,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
+            <Link href="/encuesta" className="text-sm font-medium text-ink-500 hover:text-ink-900">
+              Responder encuesta
+            </Link>
             {admin && email && (
               <span className="hidden text-[12px] text-ink-500 md:block">{email}</span>
             )}

@@ -19,6 +19,14 @@ import {
   seedMetas,
 } from "./seed";
 import { ROSTER } from "./roster";
+import { buildCodes, type CodeMap } from "./codes";
+
+let codeCache: CodeMap | null = null;
+/** Mapa código↔evaluador (memoizado sobre el padrón semilla). */
+export function codeMap(s: Store): CodeMap {
+  if (!codeCache) codeCache = buildCodes(s.personas);
+  return codeCache;
+}
 
 /* ---------------------------------------------------------------------------
    Store de la versión estándar: datos semilla + persistencia en localStorage.
@@ -66,6 +74,23 @@ export function evaluadoresDe(personas: Persona[], evaluado: Persona): Persona[]
   }
   if (evaluado.nivel === 1) {
     return personas.filter((p) => p.nivel === 2);
+  }
+  return [];
+}
+
+/** Personas que un evaluador debe evaluar (inverso de evaluadoresDe). */
+export function evaluadosDe(personas: Persona[], evaluador: Persona): Persona[] {
+  if (evaluador.nivel === 4) {
+    return personas.filter((p) => p.nivel === 3 && p.area === evaluador.area);
+  }
+  if (evaluador.nivel === 3) {
+    const conRegion = personas.filter(
+      (p) => p.nivel === 2 && evaluador.region && p.region === evaluador.region
+    );
+    return conRegion.length ? conRegion : personas.filter((p) => p.nivel === 2);
+  }
+  if (evaluador.nivel === 2) {
+    return personas.filter((p) => p.nivel === 1);
   }
   return [];
 }
