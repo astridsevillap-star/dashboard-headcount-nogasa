@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+/*
+  Sistema de diseño · Evaluación cultural
+  Acento único: azul #0957C3. Rojo #E31013 reservado a semántica negativa
+  (brecha crítica). Ámbar para brecha leve, verde para meta cumplida.
+  Radios: contenedores 12px, controles 8px, chips pill. Tema claro fijo.
+*/
+@theme {
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, "SF Mono", monospace;
+
+  --color-brand-25: #f5f9fe;
+  --color-brand-50: #eaf2fc;
+  --color-brand-100: #d3e3f9;
+  --color-brand-200: #a6c7f2;
+  --color-brand-300: #6ea3e8;
+  --color-brand-500: #1d6ad1;
+  --color-brand-600: #0957c3;
+  --color-brand-700: #0a48a0;
+  --color-brand-800: #0c3b80;
+  --color-brand-900: #0d2f64;
+
+  --color-danger-500: #e31013;
+  --color-danger-600: #c00e11;
+  --color-danger-700: #a30d0f;
+  --color-danger-50: #fdeceb;
+  --color-danger-100: #fad7d6;
+
+  --color-warn-600: #b45309;
+  --color-warn-50: #fdf3e2;
+  --color-warn-100: #f9e4c2;
+
+  --color-ok-600: #047857;
+  --color-ok-50: #e7f7ef;
+  --color-ok-100: #cfeede;
+
+  --color-ink-900: #17171a;
+  --color-ink-700: #3f3f46;
+  --color-ink-500: #6b6b74;
+  --color-ink-400: #9b9ba3;
+  --color-ink-300: #c9c9cf;
+
+  --color-line: #e7e7ea;
+  --color-line-soft: #f0f0f2;
+  --color-page: #f7f7f8;
+  --color-surface: #fefefe;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-page);
+  color: var(--color-ink-900);
+  font-feature-settings: "ss01";
+  -webkit-font-smoothing: antialiased;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+:where(button, a, input, select, [role="button"]):focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+.matrix-scroll::-webkit-scrollbar {
+  height: 10px;
+  width: 10px;
+}
+.matrix-scroll::-webkit-scrollbar-thumb {
+  background: var(--color-ink-300);
+  border-radius: 999px;
+  border: 2px solid var(--color-surface);
+}
+.matrix-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-rise {
+    animation: fade-rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  @keyframes fade-rise {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #ececef 25%, #f5f5f7 50%, #ececef 75%);
+  background-size: 200% 100%;
+  border-radius: 8px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .skeleton {
+    animation: shimmer 1.6s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    from { background-position: 200% 0; }
+    to { background-position: -200% 0; }
+  }
+}
