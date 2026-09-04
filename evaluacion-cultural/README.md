@@ -65,3 +65,5 @@ npm run dev
 - **Personas**: edita el padrón en `/configuracion → Personas` o el archivo `src/lib/roster.ts`.
 - **Preguntas / competencias**: `/configuracion → Preguntas` o `src/lib/seed.ts`.
 - **¿Evaluar también a los N4?** cambia `EVALUAR_NIVELES` en `src/lib/data.ts`.
+
+<!-- deploy: evaluacion-cultural en Vercel (Root Directory = evaluacion-cultural) -->
