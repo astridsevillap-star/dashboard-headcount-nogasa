@@ -3,30 +3,18 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { currentEmail, isAdmin as checkAdmin, signOut } from "@/lib/auth";
-
-const NAV = [
-  { href: "/", label: "Dashboard" },
-  { href: "/evaluar", label: "Evaluar", admin: true },
-  { href: "/configuracion", label: "Configuración", admin: true },
-  { href: "/metas", label: "Metas", admin: true },
-  { href: "/accesos", label: "Accesos", admin: true },
-];
-
-const ADMIN_PREFIXES = ["/evaluar", "/metas", "/configuracion", "/accesos"];
+import { clearAdminKey, getAdminKey } from "@/lib/backend";
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [admin, setAdmin] = useState(false);
-  const [email, setEmail] = useState<string | null>(null);
 
   useEffect(() => {
-    setAdmin(checkAdmin());
-    setEmail(currentEmail());
+    setAdmin(Boolean(getAdminKey()));
   }, [pathname]);
 
-  const inAdmin = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
+  const enEncuesta = pathname.startsWith("/encuesta");
 
   return (
     <div className="min-h-[100dvh]">
@@ -41,53 +29,43 @@ export function Shell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex h-full items-center gap-1">
-            {NAV.filter((item) => !item.admin || admin).map((item) => {
-              const active =
-                item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`relative flex h-full items-center px-3 text-sm transition-colors ${
-                    active ? "font-medium text-ink-900" : "text-ink-500 hover:text-ink-900"
-                  }`}
-                >
-                  {item.label}
-                  {active && (
-                    <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-t-full bg-brand-600" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+          {admin && !enEncuesta && (
+            <nav className="flex h-full items-center gap-1">
+              <Link
+                href="/"
+                className={`relative flex h-full items-center px-3 text-sm transition-colors ${
+                  pathname === "/" ? "font-medium text-ink-900" : "text-ink-500 hover:text-ink-900"
+                }`}
+              >
+                Dashboard
+                {pathname === "/" && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-t-full bg-brand-600" />}
+              </Link>
+            </nav>
+          )}
 
-          <div className="ml-auto flex items-center gap-3">
-            <Link href="/encuesta" className="text-sm font-medium text-ink-500 hover:text-ink-900">
-              Responder encuesta
-            </Link>
-            {admin && email && (
-              <span className="hidden text-[12px] text-ink-500 md:block">{email}</span>
+          <div className="ml-auto flex items-center gap-4">
+            {!enEncuesta && (
+              <Link href="/encuesta" className="text-sm font-medium text-ink-500 hover:text-ink-900">
+                Responder encuesta
+              </Link>
             )}
             {admin ? (
               <button
                 onClick={() => {
-                  signOut();
+                  clearAdminKey();
                   setAdmin(false);
-                  router.replace("/");
+                  router.replace("/login");
                 }}
                 className="text-sm font-medium text-brand-600"
               >
                 Salir
               </button>
             ) : (
-              <Link
-                href="/login"
-                className="text-sm font-medium text-brand-600"
-                aria-current={inAdmin ? "page" : undefined}
-              >
-                Administrar
-              </Link>
+              !enEncuesta && (
+                <Link href="/login" className="text-sm font-medium text-brand-600">
+                  Administrar
+                </Link>
+              )
             )}
           </div>
         </div>

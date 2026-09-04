@@ -8,92 +8,63 @@ import {
   codeMap,
   competencias,
   evaluadosDe,
-  loadStore,
+  personas,
   preguntasActivas,
-  registrarEvaluacion,
-  type Store,
 } from "@/lib/data";
 import { normalizeCode } from "@/lib/codes";
+import { submitEncuesta, yaCompleto } from "@/lib/backend";
 import { ESCALA, EDICION } from "@/lib/seed";
 import type { Persona, Pregunta } from "@/lib/types";
 
 const SESSION = "ec_evaluador_v1";
-const doneKey = (id: string) => `ec_done_${id}`;
 
 export default function EncuestaPage() {
-  const [store, setStore] = useState<Store | null>(null);
   const [evaluadorId, setEvaluadorId] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const s = loadStore();
-    setStore(s);
     try {
       const saved = window.localStorage.getItem(SESSION);
-      if (saved && s.personas.some((p) => p.id === saved)) setEvaluadorId(saved);
-    } catch {
-      /* almacenamiento no disponible */
-    }
+      if (saved && personas.some((p) => p.id === saved)) setEvaluadorId(saved);
+    } catch { /* noop */ }
+    setReady(true);
   }, []);
 
-  if (!store) return <div className="mx-auto max-w-md pt-10"><Skeleton className="h-64 w-full" /></div>;
+  if (!ready) return <div className="mx-auto max-w-md pt-10"><Skeleton className="h-64 w-full" /></div>;
 
-  const evaluador = store.personas.find((p) => p.id === evaluadorId) ?? null;
-
-  function salir() {
-    try {
-      window.localStorage.removeItem(SESSION);
-    } catch { /* noop */ }
+  const evaluador = personas.find((p) => p.id === evaluadorId) ?? null;
+  const salir = () => {
+    try { window.localStorage.removeItem(SESSION); } catch { /* noop */ }
     setEvaluadorId(null);
-  }
+  };
 
-  if (!evaluador) return <CodeGate store={store} onEnter={(id) => {
-    try { window.localStorage.setItem(SESSION, id); } catch { /* noop */ }
-    setEvaluadorId(id);
-  }} />;
+  if (!evaluador)
+    return <CodeGate onEnter={(id) => { try { window.localStorage.setItem(SESSION, id); } catch { /* noop */ } setEvaluadorId(id); }} />;
 
-  return <Survey store={store} evaluador={evaluador} onExit={salir} />;
+  return <Survey evaluador={evaluador} onExit={salir} />;
 }
 
-/* ---------- pantalla de código ---------- */
-
-function CodeGate({ store, onEnter }: { store: Store; onEnter: (id: string) => void }) {
+function CodeGate({ onEnter }: { onEnter: (id: string) => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
-  const map = useMemo(() => codeMap(store), [store]);
-
+  const map = useMemo(() => codeMap(), []);
   function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const c = normalizeCode(code);
-    const id = map.byCode.get(c);
-    if (!id) {
-      setError("Código no válido. Revisa el código que recibiste.");
-      return;
-    }
+    const id = map.byCode.get(normalizeCode(code));
+    if (!id) { setError("Código no válido. Revisa el código que recibiste."); return; }
     onEnter(id);
   }
-
   return (
     <div className="mx-auto mt-12 max-w-md rounded-[12px] border border-line bg-surface p-6">
-      <span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">
-        Evaluación cultural {EDICION}
-      </span>
+      <span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">Evaluación cultural {EDICION}</span>
       <h1 className="mt-1 text-xl font-semibold text-ink-900">Ingresa con tu código</h1>
       <p className="mt-2 text-sm text-ink-500">
-        Escribe el código de acceso que recibiste. Es personal y confidencial; tus respuestas se
-        guardan de forma <strong>anónima</strong>.
+        Escribe el código de acceso que recibiste. Es personal y confidencial; tus respuestas se guardan de forma <strong>anónima</strong>.
       </p>
       <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
-        <TextInput
-          value={code}
-          onChange={(e) => setCode(e.target.value)}
-          placeholder="Ej. ABC123"
-          autoComplete="off"
-          autoCapitalize="characters"
-          className="text-center text-lg tracking-[0.3em] uppercase"
-          maxLength={8}
-          required
-        />
+        <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. ABC123" autoComplete="off"
+          className="text-center text-lg tracking-[0.3em] uppercase" maxLength={8} required />
         <Button variant="primary" type="submit" disabled={!code.trim()}>Ingresar</Button>
       </form>
       {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
@@ -101,90 +72,79 @@ function CodeGate({ store, onEnter }: { store: Store; onEnter: (id: string) => v
   );
 }
 
-/* ---------- encuesta ---------- */
-
-function Survey({ store, evaluador, onExit }: { store: Store; evaluador: Persona; onExit: () => void }) {
-  const evaluados = useMemo(() => evaluadosDe(store.personas, evaluador), [store, evaluador]);
+function Survey({ evaluador, onExit }: { evaluador: Persona; onExit: () => void }) {
+  const evaluadosList = useMemo(() => evaluadosDe(personas, evaluador), [evaluador]);
   const preguntas: Pregunta[] = useMemo(
-    () => (evaluados.length ? preguntasActivas(store.preguntas, audienciaDe(evaluados[0].nivel)) : []),
-    [store, evaluados]
+    () => (evaluadosList.length ? preguntasActivas(audienciaDe(evaluadosList[0].nivel)) : []),
+    [evaluadosList]
   );
   const [qi, setQi] = useState(0);
-  // respuestas[preguntaId][evaluadoId] = 1..5 | 0 (N/A)
   const [resp, setResp] = useState<Record<string, Record<string, number>>>({});
-  const [enviado, setEnviado] = useState(false);
+  const [estado, setEstado] = useState<"cargando" | "pendiente" | "hecho" | "enviando">("cargando");
   const { toasts, push, dismiss } = useToasts();
 
-  const yaHecho = (() => {
-    try { return window.localStorage.getItem(doneKey(evaluador.id)) === "1"; } catch { return false; }
-  })();
+  useEffect(() => {
+    let active = true;
+    yaCompleto(evaluador.id).then((done) => {
+      if (active) setEstado(done ? "hecho" : "pendiente");
+    });
+    return () => { active = false; };
+  }, [evaluador.id]);
 
-  if (evaluados.length === 0) {
-    return (
-      <Centered title="No tienes personas asignadas" onExit={onExit}>
-        Con este código no hay evaluaciones pendientes. Verifica con el área de Gestión de Personas.
-      </Centered>
-    );
-  }
-  if (yaHecho || enviado) {
-    return (
-      <Centered title="¡Gracias por tu evaluación!" icon onExit={onExit}>
-        Tus respuestas se registraron de forma anónima. Ya puedes cerrar esta ventana.
-      </Centered>
-    );
-  }
+  if (evaluadosList.length === 0)
+    return <Centered title="No tienes personas asignadas" onExit={onExit}>Con este código no hay evaluaciones pendientes. Verifica con Gestión de Personas.</Centered>;
+  if (estado === "cargando")
+    return <div className="mx-auto max-w-3xl pt-10"><Skeleton className="h-64 w-full" /></div>;
+  if (estado === "hecho")
+    return <Centered title="¡Gracias por tu evaluación!" icon onExit={onExit}>Tus respuestas ya fueron registradas de forma anónima. Puedes cerrar esta ventana.</Centered>;
 
   const q = preguntas[qi];
-  const setCell = (evId: string, v: number) =>
-    setResp((prev) => ({ ...prev, [q.id]: { ...prev[q.id], [evId]: v } }));
-
-  const conductaCompleta = (pid: string) => evaluados.every((e) => resp[pid]?.[e.id] !== undefined);
+  const setCell = (evId: string, v: number) => setResp((prev) => ({ ...prev, [q.id]: { ...prev[q.id], [evId]: v } }));
+  const conductaCompleta = (pid: string) => evaluadosList.every((e) => resp[pid]?.[e.id] !== undefined);
   const todoListo = preguntas.every((p) => conductaCompleta(p.id));
+  const done = preguntas.filter((p) => conductaCompleta(p.id)).length;
 
-  function finalizar() {
-    if (!todoListo) return;
-    for (const ev of evaluados) {
-      const answers: Record<string, number> = {};
+  async function finalizar() {
+    if (!todoListo || estado === "enviando") return;
+    setEstado("enviando");
+    const answers: Record<string, Record<string, number>> = {};
+    for (const ev of evaluadosList) {
+      answers[ev.id] = {};
       for (const p of preguntas) {
         const v = resp[p.id]?.[ev.id];
-        if (v && v > 0) answers[p.id] = v;
+        if (v && v > 0) answers[ev.id][p.id] = v;
       }
-      registrarEvaluacion(ev.id, answers);
     }
-    try { window.localStorage.setItem(doneKey(evaluador.id), "1"); } catch { /* noop */ }
-    push("ok", "Evaluación registrada.");
-    setEnviado(true);
+    try {
+      const r = await submitEncuesta(evaluador.id, answers);
+      setEstado("hecho");
+      if (r === "already") push("ok", "Ya habías respondido; no se duplicó.");
+    } catch {
+      setEstado("pendiente");
+      push("error", "No se pudo enviar. Revisa tu conexión e intenta de nuevo.");
+    }
   }
 
   const compNombre = competencias.find((c) => c.id === q.competenciaId)?.nombre ?? "";
-  const done = preguntas.filter((p) => conductaCompleta(p.id)).length;
 
   return (
     <div className="fade-rise mx-auto flex max-w-3xl flex-col gap-4">
       <div className="flex items-center justify-between gap-3 pt-2">
         <div>
-          <span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">
-            Evaluación cultural {EDICION}
-          </span>
-          <p className="text-[13px] text-ink-500">
-            Evaluando a {evaluados.length === 1 ? evaluados[0].nombre : `${evaluados.length} líderes de tu área`}
-          </p>
+          <span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">Evaluación cultural {EDICION}</span>
+          <p className="text-[13px] text-ink-500">Evaluando a {evaluadosList.length === 1 ? evaluadosList[0].nombre : `${evaluadosList.length} líderes de tu área`}</p>
         </div>
         <button onClick={onExit} className="text-sm font-medium text-ink-500 hover:text-ink-900">Salir</button>
       </div>
 
       <div className="rounded-[14px] border border-line bg-surface p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600">
-          {compNombre} · Conducta {qi + 1} de {preguntas.length}
-        </p>
-        <h1 className="mt-2 text-[22px] font-semibold leading-snug text-ink-900" style={{ textWrap: "balance" }}>
-          {q.texto}
-        </h1>
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600">{compNombre} · Conducta {qi + 1} de {preguntas.length}</p>
+        <h1 className="mt-2 text-[22px] font-semibold leading-snug text-ink-900" style={{ textWrap: "balance" }}>{q.texto}</h1>
         <p className="mt-1.5 text-sm text-ink-500">Aplica este mismo criterio a cada persona para comparar lo que has observado.</p>
       </div>
 
       <div className="flex flex-col gap-3">
-        {evaluados.map((ev) => {
+        {evaluadosList.map((ev) => {
           const val = resp[q.id]?.[ev.id];
           return (
             <div key={ev.id} className="rounded-[14px] border border-line bg-surface p-4">
@@ -202,26 +162,14 @@ function Survey({ store, evaluador, onExit }: { store: Store; evaluador: Persona
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
                 {ESCALA.map((op) => (
-                  <button
-                    key={op.value}
-                    onClick={() => setCell(ev.id, op.value)}
-                    className={`rounded-[10px] border px-2 py-2.5 text-[13px] transition-colors ${
-                      val === op.value
-                        ? "border-brand-600 bg-brand-50 font-medium text-brand-700"
-                        : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"
-                    }`}
-                  >
-                    <span className="tnum mr-1 font-mono font-semibold">{op.value}</span>
-                    {op.label}
+                  <button key={op.value} onClick={() => setCell(ev.id, op.value)}
+                    className={`rounded-[10px] border px-2 py-2.5 text-[13px] transition-colors ${val === op.value ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"}`}>
+                    <span className="tnum mr-1 font-mono font-semibold">{op.value}</span>{op.label}
                   </button>
                 ))}
               </div>
-              <button
-                onClick={() => setCell(ev.id, 0)}
-                className={`mt-2 w-full rounded-[10px] border px-3 py-2 text-[12px] transition-colors ${
-                  val === 0 ? "border-ink-400 bg-line-soft text-ink-700" : "border-line text-ink-400 hover:border-ink-300 hover:text-ink-700"
-                }`}
-              >
+              <button onClick={() => setCell(ev.id, 0)}
+                className={`mt-2 w-full rounded-[10px] border px-3 py-2 text-[12px] transition-colors ${val === 0 ? "border-ink-400 bg-line-soft text-ink-700" : "border-line text-ink-400 hover:border-ink-300 hover:text-ink-700"}`}>
                 No tengo suficiente información para evaluar esta conducta
               </button>
             </div>
@@ -232,16 +180,12 @@ function Survey({ store, evaluador, onExit }: { store: Store; evaluador: Persona
       <div className="sticky bottom-4 flex items-center gap-3 rounded-[14px] border border-line bg-surface/95 p-4 shadow-[0_8px_24px_rgba(23,23,26,0.08)] backdrop-blur">
         <span className="text-[13px] text-ink-500">{done} de {preguntas.length} conductas completas</span>
         <div className="ml-auto flex items-center gap-2">
-          <Button variant="secondary" onClick={() => setQi((n) => Math.max(0, n - 1))} disabled={qi === 0}>
-            Anterior
-          </Button>
+          <Button variant="secondary" onClick={() => setQi((n) => Math.max(0, n - 1))} disabled={qi === 0}>Anterior</Button>
           {qi < preguntas.length - 1 ? (
-            <Button variant="primary" onClick={() => setQi((n) => Math.min(preguntas.length - 1, n + 1))} disabled={!conductaCompleta(q.id)}>
-              Siguiente
-            </Button>
+            <Button variant="primary" onClick={() => setQi((n) => Math.min(preguntas.length - 1, n + 1))} disabled={!conductaCompleta(q.id)}>Siguiente</Button>
           ) : (
-            <Button variant="primary" onClick={finalizar} disabled={!todoListo}>
-              Finalizar y enviar
+            <Button variant="primary" onClick={finalizar} disabled={!todoListo || estado === "enviando"}>
+              {estado === "enviando" ? "Enviando…" : "Finalizar y enviar"}
             </Button>
           )}
         </div>
