@@ -8,6 +8,7 @@ import {
   codeMap,
   competencias,
   evaluadosDe,
+  loadOrg,
   personas,
   preguntasActivas,
 } from "@/lib/data";
@@ -23,11 +24,15 @@ export default function EncuestaPage() {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = window.localStorage.getItem(SESSION);
-      if (saved && personas.some((p) => p.id === saved)) setEvaluadorId(saved);
-    } catch { /* noop */ }
-    setReady(true);
+    loadOrg()
+      .catch(() => {}) // si falla, se usa el padrón base ya cargado en memoria
+      .finally(() => {
+        try {
+          const saved = window.localStorage.getItem(SESSION);
+          if (saved && personas.some((p) => p.id === saved)) setEvaluadorId(saved);
+        } catch { /* noop */ }
+        setReady(true);
+      });
   }, []);
 
   if (!ready) return <div className="mx-auto max-w-md pt-10"><Skeleton className="h-64 w-full" /></div>;
