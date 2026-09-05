@@ -45,12 +45,40 @@ export function esEvaluado(p: Persona): boolean {
   return EVALUAR_NIVELES.includes(p.nivel);
 }
 
-/** Evaluadores asignados a un evaluado (cascada ascendente; región en niveles altos). */
+/**
+ * Relación 90° ascendente. No todos los segmentos tienen la misma estructura:
+ *   · Ventas Detalle: N4 → N3 (por área) → N2 (regional, por región) → N1.
+ *   · Ventas LPC: N4 → N3 (por área) → N2 (líder de producto único) → N1.
+ *   · Home Care / Supermercado: N4 → N2 directo (sin nivel N3) → N1.
+ * La región solo desambigua cuando un área tiene más de un N2 (caso Detalle);
+ * si el área tiene un único N2, todo N3 de esa área lo evalúa sin filtrar por región.
+ */
+function n2sDelArea(all: Persona[], area: string): Persona[] {
+  return all.filter((p) => p.nivel === 2 && p.area === area);
+}
+function n3sDelArea(all: Persona[], area: string): Persona[] {
+  return all.filter((p) => p.nivel === 3 && p.area === area);
+}
+
+/** Evaluadores asignados a un evaluado (cascada ascendente). */
 export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
-  if (evaluado.nivel === 3) return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+  if (evaluado.nivel === 3) {
+    return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+  }
   if (evaluado.nivel === 2) {
-    const r = all.filter((p) => p.nivel === 3 && evaluado.region && p.region === evaluado.region);
-    return r.length ? r : all.filter((p) => p.nivel === 3);
+    const n2s = n2sDelArea(all, evaluado.area);
+    const n3s = n3sDelArea(all, evaluado.area);
+    if (n3s.length === 0) {
+      // segmento sin nivel N3: los vendedores del área evalúan directo al líder
+      return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+    }
+    if (n2s.length > 1 && evaluado.region) {
+      // área con varios N2 (regiones): filtra los N3 de esa misma región
+      const porRegion = n3s.filter((p) => p.region === evaluado.region);
+      return porRegion.length ? porRegion : n3s;
+    }
+    // único N2 del área (líder de producto): todos los N3 del área lo evalúan
+    return n3s;
   }
   if (evaluado.nivel === 1) return all.filter((p) => p.nivel === 2);
   return [];
@@ -58,10 +86,19 @@ export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
 
 /** Personas que un evaluador debe evaluar (inverso de evaluadoresDe). */
 export function evaluadosDe(all: Persona[], evaluador: Persona): Persona[] {
-  if (evaluador.nivel === 4) return all.filter((p) => p.nivel === 3 && p.area === evaluador.area);
+  if (evaluador.nivel === 4) {
+    const n3s = n3sDelArea(all, evaluador.area);
+    if (n3s.length > 0) return n3s;
+    // segmento sin nivel N3 (Home Care / Supermercado): evalúa directo al N2
+    return n2sDelArea(all, evaluador.area);
+  }
   if (evaluador.nivel === 3) {
-    const r = all.filter((p) => p.nivel === 2 && evaluador.region && p.region === evaluador.region);
-    return r.length ? r : all.filter((p) => p.nivel === 2);
+    const n2s = n2sDelArea(all, evaluador.area);
+    if (n2s.length > 1 && evaluador.region) {
+      const porRegion = n2s.filter((p) => p.region === evaluador.region);
+      return porRegion.length ? porRegion : n2s;
+    }
+    return n2s;
   }
   if (evaluador.nivel === 2) return all.filter((p) => p.nivel === 1);
   return [];
