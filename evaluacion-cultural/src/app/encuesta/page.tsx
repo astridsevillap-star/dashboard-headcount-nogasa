@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { CheckCircle } from "@phosphor-icons/react";
+import { CheckCircle, LockSimple, ArrowRight, ShieldCheck } from "@phosphor-icons/react";
 import { Button, TextInput, Skeleton, useToasts, ToastStack } from "@/components/ui";
 import {
   audienciaDe,
@@ -44,11 +44,6 @@ export default function EncuestaPage() {
   return <Survey evaluador={evaluador} onExit={salir} />;
 }
 
-const COMP_CHIP_COLORS: Record<string, string> = {
-  creatividad: "#7db0ef", autonomia: "#7fd6bd", competitividad: "#f0b183",
-  empatia: "#c3a0ea", integracion: "#7fc6da",
-};
-
 function CodeGate({ onEnter }: { onEnter: (id: string) => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -61,68 +56,61 @@ function CodeGate({ onEnter }: { onEnter: (id: string) => void }) {
     onEnter(id);
   }
   return (
-    <div className="fade-rise mx-auto mt-6 grid max-w-5xl overflow-hidden rounded-[20px] border border-line bg-surface shadow-[0_20px_60px_rgba(9,45,100,0.14)] md:mt-10 md:grid-cols-2">
-      {/* panel de marca */}
-      <div className="relative overflow-hidden bg-brand-700 p-8 text-white sm:p-10">
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background:
-              "radial-gradient(120% 90% at 15% 0%, #1d6ad1 0%, transparent 55%), radial-gradient(120% 120% at 100% 100%, #0a3b80 0%, transparent 60%)",
-          }}
-        />
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/5" />
-        <div className="pointer-events-none absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-white/5" />
-        <div className="relative">
-          <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">
-            Gerencia de Ventas B2C · {EDICION}
-          </span>
-          <h1 className="mt-5 text-[34px] font-bold leading-[1.08] tracking-tight sm:text-[40px]">
-            Evaluación<br />cultural
-          </h1>
-          <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-white/80">
-            Tu mirada ayuda a construir la cultura del equipo. Evalúas a tus líderes en cinco
-            competencias; toma pocos minutos.
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {competencias.map((c) => (
-              <span key={c.id} className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[12px] font-medium text-white/90">
-                <span className="h-2 w-2 rounded-full" style={{ background: COMP_CHIP_COLORS[c.id] ?? "#ffffff" }} />
-                {c.nombre}
-              </span>
-            ))}
-          </div>
-          <div className="mt-7 flex items-center gap-2 text-[12.5px] text-white/75">
-            <span className="text-[15px]">🔒</span>
-            100% anónima · tus respuestas se guardan agregadas.
-          </div>
+    <div className="fade-rise mx-auto grid max-w-6xl items-center gap-10 px-1 pt-6 md:min-h-[calc(100dvh-160px)] md:grid-cols-[1.15fr_0.85fr] md:gap-16 md:pt-10">
+      {/* titular */}
+      <div>
+        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Acceso restringido</p>
+        <h1 className="mt-5 text-[clamp(44px,7vw,76px)] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink-900" style={{ textWrap: "balance" }}>
+          Una mirada al liderazgo cultural.
+        </h1>
+        <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-ink-500">
+          Esta evaluación es confidencial y está dirigida al equipo de ventas. Con tu código
+          evalúas a tus líderes en las cinco competencias culturales.
+        </p>
+        <div className="mt-8 flex items-start gap-2.5 text-[13px] text-ink-500">
+          <ShieldCheck size={18} weight="fill" className="mt-px shrink-0 text-brand-600" />
+          El código personal solo registra tu participación; no se guarda con tus respuestas.
         </div>
       </div>
 
-      {/* ingreso por código */}
-      <div className="flex flex-col justify-center p-8 sm:p-10">
-        <h2 className="text-[20px] font-semibold text-ink-900">Ingresa con tu código</h2>
-        <p className="mt-2 text-sm text-ink-500">
-          Escribe el código de acceso que recibiste. Es personal y confidencial.
+      {/* tarjeta de ingreso */}
+      <div className="rounded-[22px] border border-line bg-surface p-7 shadow-[0_24px_70px_rgba(13,47,100,0.12)] sm:p-9">
+        <span className="flex h-12 w-12 items-center justify-center rounded-[14px] bg-brand-50 text-brand-600">
+          <LockSimple size={24} weight="bold" />
+        </span>
+        <h2 className="mt-5 text-[24px] font-bold tracking-tight text-ink-900">Ingresa tu código personal</h2>
+        <p className="mt-2 text-[14px] leading-relaxed text-ink-500">
+          Usa el código que recibiste para completar una sola evaluación.
         </p>
-        <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
-          <TextInput
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder="Ej. ABC123"
-            autoComplete="off"
-            className="h-12 text-center text-xl font-semibold tracking-[0.4em] uppercase"
-            maxLength={8}
-            required
-          />
-          <Button variant="primary" type="submit" disabled={!code.trim()} className="h-12 text-[15px]">
-            Comenzar
-          </Button>
+        <form onSubmit={submit} className="mt-6 flex flex-col gap-4">
+          <div>
+            <label className="mb-1.5 block text-[13px] font-semibold text-ink-900">Código personal</label>
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="characters"
+              maxLength={8}
+              required
+              className="h-12 w-full rounded-[10px] border border-line bg-surface px-4 text-[16px] font-semibold uppercase tracking-[0.18em] text-ink-900 outline-none transition-colors placeholder:font-normal placeholder:tracking-normal placeholder:text-ink-400 hover:border-ink-300 focus:border-brand-600"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={!code.trim()}
+            className="group inline-flex h-12 items-center justify-center gap-2 rounded-full bg-ink-900 text-[15px] font-semibold text-white transition-all hover:bg-ink-700 active:translate-y-[1px] disabled:pointer-events-none disabled:opacity-40"
+          >
+            Ingresar
+            <ArrowRight size={17} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
+          </button>
         </form>
         {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
-        <p className="mt-6 border-t border-line-soft pt-4 text-[12px] leading-relaxed text-ink-400">
-          ¿No tienes tu código? Solicítalo al área de Gestión de Personas.
-        </p>
+        <button
+          onClick={() => { setCode(""); setError(""); }}
+          className="mt-5 block w-full text-center text-[13px] font-medium text-ink-500 hover:text-ink-900"
+        >
+          Volver al inicio
+        </button>
       </div>
     </div>
   );
