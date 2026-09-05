@@ -85,7 +85,11 @@ export function audienciaDe(nivel: Nivel): Audiencia {
   return nivel === 1 ? "gerencial" : "general";
 }
 export function esEvaluado(p: Persona): boolean {
-  return EVALUAR_NIVELES.includes(p.nivel);
+  if (!EVALUAR_NIVELES.includes(p.nivel)) return false;
+  // Los N3 regionales fuera de Lima participan como evaluadores del regional N2,
+  // pero no reciben evaluación en esta edición.
+  if (p.nivel === 3 && p.area === "VENTAS DETALLE" && p.region && p.region !== "LIMA") return false;
+  return true;
 }
 
 /**
@@ -106,7 +110,13 @@ function n3sDelArea(all: Persona[], area: string): Persona[] {
 /** Evaluadores asignados a un evaluado (cascada ascendente). */
 export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
   if (evaluado.nivel === 3) {
-    return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+    const n4s = all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+    // La base operativa de Detalle corresponde solo a Lima. Los N3 de otras
+    // regiones evalúan al regional N2, pero no reciben evaluación de estos N4.
+    if (evaluado.area === "VENTAS DETALLE") {
+      return evaluado.region === "LIMA" ? n4s : [];
+    }
+    return n4s;
   }
   if (evaluado.nivel === 2) {
     const n2s = n2sDelArea(all, evaluado.area);
@@ -131,8 +141,14 @@ export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
 export function evaluadosDe(all: Persona[], evaluador: Persona): Persona[] {
   if (evaluador.nivel === 4) {
     const n3s = n3sDelArea(all, evaluador.area);
-    if (n3s.length > 0) return n3s;
-    // segmento sin nivel N3 (Home Care / Supermercado): evalúa directo al N2
+    if (n3s.length > 0) {
+      // Los N4 de Detalle incluidos en la encuesta son únicamente de Lima.
+      if (evaluador.area === "VENTAS DETALLE") {
+        return n3s.filter((p) => p.region === "LIMA");
+      }
+      return n3s;
+    }
+    // Segmento sin nivel N3 (Home Care / Supermercado): evalúa directo al N2.
     return n2sDelArea(all, evaluador.area);
   }
   if (evaluador.nivel === 3) {
