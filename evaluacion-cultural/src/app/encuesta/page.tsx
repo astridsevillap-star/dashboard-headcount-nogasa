@@ -44,6 +44,11 @@ export default function EncuestaPage() {
   return <Survey evaluador={evaluador} onExit={salir} />;
 }
 
+const COMP_CHIP_COLORS: Record<string, string> = {
+  creatividad: "#7db0ef", autonomia: "#7fd6bd", competitividad: "#f0b183",
+  empatia: "#c3a0ea", integracion: "#7fc6da",
+};
+
 function CodeGate({ onEnter }: { onEnter: (id: string) => void }) {
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -56,18 +61,69 @@ function CodeGate({ onEnter }: { onEnter: (id: string) => void }) {
     onEnter(id);
   }
   return (
-    <div className="mx-auto mt-12 max-w-md rounded-[12px] border border-line bg-surface p-6">
-      <span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">Evaluación cultural {EDICION}</span>
-      <h1 className="mt-1 text-xl font-semibold text-ink-900">Ingresa con tu código</h1>
-      <p className="mt-2 text-sm text-ink-500">
-        Escribe el código de acceso que recibiste. Es personal y confidencial; tus respuestas se guardan de forma <strong>anónima</strong>.
-      </p>
-      <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
-        <TextInput value={code} onChange={(e) => setCode(e.target.value)} placeholder="Ej. ABC123" autoComplete="off"
-          className="text-center text-lg tracking-[0.3em] uppercase" maxLength={8} required />
-        <Button variant="primary" type="submit" disabled={!code.trim()}>Ingresar</Button>
-      </form>
-      {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
+    <div className="fade-rise mx-auto mt-6 grid max-w-5xl overflow-hidden rounded-[20px] border border-line bg-surface shadow-[0_20px_60px_rgba(9,45,100,0.14)] md:mt-10 md:grid-cols-2">
+      {/* panel de marca */}
+      <div className="relative overflow-hidden bg-brand-700 p-8 text-white sm:p-10">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background:
+              "radial-gradient(120% 90% at 15% 0%, #1d6ad1 0%, transparent 55%), radial-gradient(120% 120% at 100% 100%, #0a3b80 0%, transparent 60%)",
+          }}
+        />
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-white/5" />
+        <div className="pointer-events-none absolute -bottom-20 -left-10 h-52 w-52 rounded-full bg-white/5" />
+        <div className="relative">
+          <span className="inline-flex items-center gap-2 rounded-full bg-white/12 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/90">
+            Gerencia de Ventas B2C · {EDICION}
+          </span>
+          <h1 className="mt-5 text-[34px] font-bold leading-[1.08] tracking-tight sm:text-[40px]">
+            Evaluación<br />cultural
+          </h1>
+          <p className="mt-3 max-w-xs text-[14px] leading-relaxed text-white/80">
+            Tu mirada ayuda a construir la cultura del equipo. Evalúas a tus líderes en cinco
+            competencias; toma pocos minutos.
+          </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            {competencias.map((c) => (
+              <span key={c.id} className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1 text-[12px] font-medium text-white/90">
+                <span className="h-2 w-2 rounded-full" style={{ background: COMP_CHIP_COLORS[c.id] ?? "#ffffff" }} />
+                {c.nombre}
+              </span>
+            ))}
+          </div>
+          <div className="mt-7 flex items-center gap-2 text-[12.5px] text-white/75">
+            <span className="text-[15px]">🔒</span>
+            100% anónima · tus respuestas se guardan agregadas.
+          </div>
+        </div>
+      </div>
+
+      {/* ingreso por código */}
+      <div className="flex flex-col justify-center p-8 sm:p-10">
+        <h2 className="text-[20px] font-semibold text-ink-900">Ingresa con tu código</h2>
+        <p className="mt-2 text-sm text-ink-500">
+          Escribe el código de acceso que recibiste. Es personal y confidencial.
+        </p>
+        <form onSubmit={submit} className="mt-6 flex flex-col gap-3">
+          <TextInput
+            value={code}
+            onChange={(e) => setCode(e.target.value)}
+            placeholder="Ej. ABC123"
+            autoComplete="off"
+            className="h-12 text-center text-xl font-semibold tracking-[0.4em] uppercase"
+            maxLength={8}
+            required
+          />
+          <Button variant="primary" type="submit" disabled={!code.trim()} className="h-12 text-[15px]">
+            Comenzar
+          </Button>
+        </form>
+        {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
+        <p className="mt-6 border-t border-line-soft pt-4 text-[12px] leading-relaxed text-ink-400">
+          ¿No tienes tu código? Solicítalo al área de Gestión de Personas.
+        </p>
+      </div>
     </div>
   );
 }
