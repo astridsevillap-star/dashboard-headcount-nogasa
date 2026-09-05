@@ -15,6 +15,12 @@ import { ROSTER } from "./roster";
 import { buildCodes, type CodeMap } from "./codes";
 import { fetchOrg, type Resultados } from "./backend";
 
+function normalizarOrganizacion(p: Persona): Persona {
+  const area = p.area === "VENTAS TOLBRIN" ? "HOME CARE" : p.area;
+  const region = p.nivel === 1 ? p.region : (p.region?.trim() || "LIMA");
+  return { ...p, area, region };
+}
+
 /* ---------------------------------------------------------------------------
    Catálogo del cliente: el padrón base (ROSTER) viene del código; la
    administradora puede editar nivel/área/región de cualquier persona, o
@@ -25,7 +31,7 @@ import { fetchOrg, type Resultados } from "./backend";
 --------------------------------------------------------------------------- */
 
 /** Padrón efectivo (base + overrides + personas agregadas). Se actualiza con loadOrg(). */
-export let personas: Persona[] = ROSTER;
+export let personas: Persona[] = ROSTER.map(normalizarOrganizacion);
 
 /** Ids de personas agregadas manualmente (no vienen del Excel). */
 export let extraIds = new Set<string>();
@@ -42,7 +48,7 @@ export async function loadOrg(): Promise<Persona[]> {
       id: e.id, dni: e.dni, nombre: e.nombre, cargo: e.cargo,
       gerencia: e.gerencia, area: e.area, nivel: e.nivel as Persona["nivel"], region: e.region,
     })),
-  ];
+  ].map(normalizarOrganizacion);
 
   const next: Persona[] = [];
   for (const p of base) {
@@ -52,12 +58,12 @@ export async function loadOrg(): Promise<Persona[]> {
       continue;
     }
     if (!o.activo) continue; // persona excluida por la administradora
-    next.push({
+    next.push(normalizarOrganizacion({
       ...p,
       nivel: (o.nivel ?? p.nivel) as Persona["nivel"],
       area: o.area ?? p.area,
       region: o.region ?? p.region,
-    });
+    }));
   }
   personas = next;
   codeCache = null; // el mapa de códigos depende del padrón efectivo
