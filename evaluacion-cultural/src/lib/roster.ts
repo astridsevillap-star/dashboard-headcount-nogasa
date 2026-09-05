@@ -139,7 +139,7 @@ export const ROSTER: Persona[] = [
     "cargo": "SUPERVISOR DE CUENTAS CLAVES",
     "gerencia": "GERENCIA DE VENTAS B2C",
     "area": "VENTAS DETALLE",
-    "nivel": 3,
+    "nivel": 4,
     "region": "LIMA"
   },
   {
@@ -229,7 +229,7 @@ export const ROSTER: Persona[] = [
     "cargo": "SUPERVISOR DE CUENTAS CLAVES",
     "gerencia": "GERENCIA DE VENTAS B2C",
     "area": "VENTAS DETALLE",
-    "nivel": 3,
+    "nivel": 4,
     "region": "LIMA"
   },
   {
