@@ -121,6 +121,12 @@ export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
   if (evaluado.nivel === 2) {
     const n2s = n2sDelArea(all, evaluado.area);
     const n3s = n3sDelArea(all, evaluado.area);
+    if (evaluado.area === "VENTAS LPC") {
+      // Regla adicional de LPC: Perdomo (N2) recibe evaluación tanto de los
+      // N3 del área como de todo el personal N4 de LPC.
+      const n4s = all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
+      return [...n3s, ...n4s];
+    }
     if (n3s.length === 0) {
       // segmento sin nivel N3: los vendedores del área evalúan directo al líder
       return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
@@ -141,6 +147,10 @@ export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
 export function evaluadosDe(all: Persona[], evaluador: Persona): Persona[] {
   if (evaluador.nivel === 4) {
     const n3s = n3sDelArea(all, evaluador.area);
+    if (evaluador.area === "VENTAS LPC") {
+      // Los N4 de LPC mantienen a sus N3 y evalúan adicionalmente a Perdomo (N2).
+      return [...n3s, ...n2sDelArea(all, evaluador.area)];
+    }
     if (n3s.length > 0) {
       // Los N4 de Detalle incluidos en la encuesta son únicamente de Lima.
       if (evaluador.area === "VENTAS DETALLE") {
