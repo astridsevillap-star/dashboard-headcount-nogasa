@@ -961,5 +961,25 @@ export const ROSTER: Persona[] = [
     "area": "VENTAS DETALLE",
     "nivel": 4,
     "region": ""
+  },
+  {
+    "id": "pDEMO3",
+    "dni": "DEMO003",
+    "nombre": "DEMO · Líder de prueba",
+    "cargo": "Jefe de Ventas (demo)",
+    "gerencia": "GERENCIA DE VENTAS B2C",
+    "area": "DEMO",
+    "nivel": 3,
+    "region": ""
+  },
+  {
+    "id": "pDEMO4",
+    "dni": "DEMO004",
+    "nombre": "DEMO · Evaluador de prueba",
+    "cargo": "Vendedor (demo)",
+    "gerencia": "GERENCIA DE VENTAS B2C",
+    "area": "DEMO",
+    "nivel": 4,
+    "region": ""
   }
 ];

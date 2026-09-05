@@ -82,8 +82,10 @@ export function codeMap(): CodeMap {
 
 /* ---------- catálogos derivados ---------- */
 
+/** Área ficticia solo para pruebas; se oculta del dashboard. */
+export const DEMO_AREA = "DEMO";
 export function evaluados(): Persona[] {
-  return personas.filter(esEvaluado);
+  return personas.filter((p) => esEvaluado(p) && p.area !== DEMO_AREA);
 }
 export function areas(): string[] {
   return Array.from(new Set(evaluados().map((p) => p.area))).sort((a, b) => a.localeCompare(b, "es"));

@@ -48,7 +48,8 @@ export function buildCodes(personas: Persona[]): CodeMap {
   const byId = new Map<string, string>();
   const byCode = new Map<string, string>();
   for (const p of evaluadores) {
-    const c = uniq(p.dni + "|EC2026");
+    // Código fijo y memorable para el evaluador de prueba
+    const c = p.dni === "DEMO004" ? "DEMO25" : uniq(p.dni + "|EC2026");
     byId.set(p.id, c);
     byCode.set(c, p.id);
   }
