@@ -11,6 +11,7 @@ import {
   buildMatrix,
   competencias,
   consolidado,
+  evaluadoresDe,
   evaluadosFiltrados,
   indiceGeneral,
   loadOrg,
@@ -162,7 +163,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <SectionCard title="Matriz Área › Evaluado" desc="Índice y puntaje por competencia. Clic en un evaluado para ver el detalle."
+      <SectionCard title="Matriz Área › Evaluado" desc="Evaluadores asignados, índice y puntaje por competencia. Clic en un evaluado para ver el detalle."
         right={<LegendRow items={[{ label: "≥ meta", swatch: "bar", color: C.ok }, { label: "brecha leve", swatch: "bar", color: C.warn }, { label: "brecha crítica", swatch: "bar", color: C.danger }]} />}>
         <Matrix nodes={matrix} meta={meta} onPick={setDrawer} />
       </SectionCard>
@@ -205,6 +206,7 @@ function Matrix({ nodes, meta, onPick }: { nodes: MatrixNode[]; meta: number; on
         <thead>
           <tr>
             <th className="sticky left-0 z-10 bg-surface pb-2 text-left text-[12px] font-medium text-ink-500">Estructura</th>
+            <th className="min-w-[280px] px-3 pb-2 text-left text-[12px] font-medium text-ink-500">Evaluadores asignados</th>
             <th className="min-w-[60px] pb-2 text-center text-[12px] font-medium text-ink-500">Índice</th>
             {competencias.map((c) => (
               <th key={c.id} className="min-w-[70px] px-1 pb-2 text-center text-[11px] font-medium text-ink-500">{c.nombre}</th>
@@ -215,6 +217,8 @@ function Matrix({ nodes, meta, onPick }: { nodes: MatrixNode[]; meta: number; on
         <tbody>
           {rows.map(({ node, depth }) => {
             const isLeaf = node.level === 1;
+            const evaluado = node.evaluadoId ? personaById.get(node.evaluadoId) : undefined;
+            const evaluadores = evaluado ? evaluadoresDe(personas, evaluado) : [];
             return (
               <tr key={node.key} className="group">
                 <td className="sticky left-0 z-10 whitespace-nowrap border-b border-line-soft bg-surface py-2 pr-4 group-hover:bg-line-soft/50" style={{ paddingLeft: depth * 18 + 4 }}>
@@ -230,6 +234,13 @@ function Matrix({ nodes, meta, onPick }: { nodes: MatrixNode[]; meta: number; on
                       </button>
                     ) : <span className="text-[13px] font-semibold text-ink-900">{node.label}</span>}
                   </div>
+                </td>
+                <td className="max-w-[360px] border-b border-line-soft px-3 py-2 align-top text-[11px] leading-relaxed text-ink-500 group-hover:bg-line-soft/50">
+                  {isLeaf
+                    ? evaluadores.length
+                      ? evaluadores.map((e) => e.nombre).join(" · ")
+                      : "Sin evaluadores asignados"
+                    : "–"}
                 </td>
                 <td className="border-b border-line-soft py-2 text-center group-hover:bg-line-soft/50">
                   <span className={`inline-block min-w-[46px] rounded-[6px] px-2 py-0.5 tnum font-mono text-[12px] font-semibold ${toneBg(node.indice)}`}>{score(node.indice)}</span>
