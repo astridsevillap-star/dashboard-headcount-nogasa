@@ -13,6 +13,7 @@ import {
   consolidado,
   evaluadosFiltrados,
   indiceGeneral,
+  loadOrg,
   metaGeneral,
   NIVEL_LABEL,
   nivelesEvaluados,
@@ -43,7 +44,9 @@ export default function DashboardPage() {
       router.replace("/login");
       return;
     }
-    fetchResultados(key)
+    loadOrg()
+      .catch(() => {}) // si falla, se usa el padrón base ya cargado en memoria
+      .then(() => fetchResultados(key))
       .then(setResults)
       .catch((e) => {
         if (String(e.message).includes("unauthorized")) {

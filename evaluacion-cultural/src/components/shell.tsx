@@ -27,15 +27,24 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
           {admin && !enEncuesta && (
             <nav className="ml-4 flex h-full items-center gap-1">
-              <Link
-                href="/"
-                className={`relative flex h-full items-center px-3 text-sm transition-colors ${
-                  pathname === "/" ? "font-medium text-ink-900" : "text-ink-500 hover:text-ink-900"
-                }`}
-              >
-                Dashboard
-                {pathname === "/" && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-t-full bg-brand-600" />}
-              </Link>
+              {[
+                { href: "/", label: "Dashboard" },
+                { href: "/organizacion", label: "Organización" },
+              ].map((item) => {
+                const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`relative flex h-full items-center px-3 text-sm transition-colors ${
+                      active ? "font-medium text-ink-900" : "text-ink-500 hover:text-ink-900"
+                    }`}
+                  >
+                    {item.label}
+                    {active && <span className="absolute inset-x-3 bottom-0 h-[2px] rounded-t-full bg-brand-600" />}
+                  </Link>
+                );
+              })}
             </nav>
           )}
 

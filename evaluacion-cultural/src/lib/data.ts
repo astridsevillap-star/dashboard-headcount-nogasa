@@ -13,14 +13,57 @@ import type {
 import { COMPETENCIAS, PREGUNTAS, seedMetas } from "./seed";
 import { ROSTER } from "./roster";
 import { buildCodes, type CodeMap } from "./codes";
-import type { Resultados } from "./backend";
+import { fetchOrg, type Resultados } from "./backend";
 
 /* ---------------------------------------------------------------------------
-   Catálogo fijo (padrón + cuestionario + metas) en el cliente; los resultados
-   vienen de Supabase (ver backend.ts). Las agregaciones combinan ambos.
+   Catálogo del cliente: el padrón base (ROSTER) viene del código; la
+   administradora puede editar nivel/área/región de cualquier persona, o
+   agregar personas nuevas, desde /organizacion. Esos cambios se guardan en
+   Supabase (ec_overrides / ec_personas_extra) y se combinan aquí para formar
+   el padrón "efectivo" que usa el resto de la app. Las preguntas y metas
+   siguen siendo fijas en el código.
 --------------------------------------------------------------------------- */
 
-export const personas: Persona[] = ROSTER;
+/** Padrón efectivo (base + overrides + personas agregadas). Se actualiza con loadOrg(). */
+export let personas: Persona[] = ROSTER;
+
+/** Ids de personas agregadas manualmente (no vienen del Excel). */
+export let extraIds = new Set<string>();
+
+/** Descarga los overrides de organización y recalcula el padrón efectivo. */
+export async function loadOrg(): Promise<Persona[]> {
+  const { overrides, extra } = await fetchOrg();
+  const byId = new Map(overrides.map((o) => [o.persona_id, o]));
+  extraIds = new Set(extra.map((e) => e.id));
+
+  const base: Persona[] = [
+    ...ROSTER,
+    ...extra.map((e) => ({
+      id: e.id, dni: e.dni, nombre: e.nombre, cargo: e.cargo,
+      gerencia: e.gerencia, area: e.area, nivel: e.nivel as Persona["nivel"], region: e.region,
+    })),
+  ];
+
+  const next: Persona[] = [];
+  for (const p of base) {
+    const o = byId.get(p.id);
+    if (!o) {
+      next.push(p);
+      continue;
+    }
+    if (!o.activo) continue; // persona excluida por la administradora
+    next.push({
+      ...p,
+      nivel: (o.nivel ?? p.nivel) as Persona["nivel"],
+      area: o.area ?? p.area,
+      region: o.region ?? p.region,
+    });
+  }
+  personas = next;
+  codeCache = null; // el mapa de códigos depende del padrón efectivo
+  return personas;
+}
+
 export const competencias: Competencia[] = COMPETENCIAS;
 export const metas: Meta[] = seedMetas();
 export const nombreCompetencia = (id: string) =>

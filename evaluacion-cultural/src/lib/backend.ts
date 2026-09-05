@@ -62,6 +62,51 @@ export async function fetchResultados(key: string): Promise<Resultados> {
 
 export const emptyResultados = (): Resultados => EMPTY;
 
+/* ---------- organización editable (overrides de nivel/área/región) ---------- */
+
+export type Override = { persona_id: string; nivel: number | null; area: string | null; region: string | null; activo: boolean };
+export type PersonaExtra = {
+  id: string; dni: string; nombre: string; cargo: string; gerencia: string; area: string; nivel: number; region: string;
+};
+
+export async function fetchOrg(): Promise<{ overrides: Override[]; extra: PersonaExtra[] }> {
+  const { data, error } = await supabase.rpc("ec_org_get");
+  if (error) throw new Error(error.message);
+  return data as { overrides: Override[]; extra: PersonaExtra[] };
+}
+
+export async function setOverride(
+  adminKey: string,
+  personaId: string,
+  nivel: number,
+  area: string,
+  region: string,
+  activo: boolean
+) {
+  const { error } = await supabase.rpc("ec_org_set_override", {
+    p_admin_key: adminKey, p_persona_id: personaId, p_nivel: nivel, p_area: area, p_region: region, p_activo: activo,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function clearOverride(adminKey: string, personaId: string) {
+  const { error } = await supabase.rpc("ec_org_clear_override", { p_admin_key: adminKey, p_persona_id: personaId });
+  if (error) throw new Error(error.message);
+}
+
+export async function upsertExtra(adminKey: string, p: PersonaExtra) {
+  const { error } = await supabase.rpc("ec_org_upsert_extra", {
+    p_admin_key: adminKey, p_id: p.id, p_dni: p.dni, p_nombre: p.nombre, p_cargo: p.cargo,
+    p_gerencia: p.gerencia, p_area: p.area, p_nivel: p.nivel, p_region: p.region,
+  });
+  if (error) throw new Error(error.message);
+}
+
+export async function deleteExtra(adminKey: string, id: string) {
+  const { error } = await supabase.rpc("ec_org_delete_extra", { p_admin_key: adminKey, p_id: id });
+  if (error) throw new Error(error.message);
+}
+
 /* ---------- sesión de administrador (clave en el navegador) ---------- */
 
 const ADMIN_KEY = "ec_admin_key_v1";
