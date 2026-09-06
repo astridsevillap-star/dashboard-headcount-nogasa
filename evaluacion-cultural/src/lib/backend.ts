@@ -65,14 +65,28 @@ export const emptyResultados = (): Resultados => EMPTY;
 /* ---------- organización editable (overrides de nivel/área/región) ---------- */
 
 export type Override = { persona_id: string; nivel: number | null; area: string | null; region: string | null; activo: boolean };
+export type AssignmentOverride = { evaluador_id: string; evaluado_id: string; activo: boolean };
 export type PersonaExtra = {
   id: string; dni: string; nombre: string; cargo: string; gerencia: string; area: string; nivel: number; region: string;
 };
 
-export async function fetchOrg(): Promise<{ overrides: Override[]; extra: PersonaExtra[] }> {
+export async function fetchOrg(): Promise<{ overrides: Override[]; extra: PersonaExtra[]; assignments: AssignmentOverride[] }> {
   const { data, error } = await supabase.rpc("ec_org_get");
   if (error) throw new Error(error.message);
-  return data as { overrides: Override[]; extra: PersonaExtra[] };
+  return data as { overrides: Override[]; extra: PersonaExtra[]; assignments: AssignmentOverride[] };
+}
+
+export async function replaceAssignmentOverrides(
+  adminKey: string,
+  evaluadoId: string,
+  overrides: { evaluador_id: string; activo: boolean }[]
+) {
+  const { error } = await supabase.rpc("ec_org_replace_assignment_overrides", {
+    p_admin_key: adminKey,
+    p_evaluado_id: evaluadoId,
+    p_overrides: overrides,
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function setOverride(
