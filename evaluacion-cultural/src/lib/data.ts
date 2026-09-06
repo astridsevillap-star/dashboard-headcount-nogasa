@@ -36,11 +36,17 @@ export let personas: Persona[] = ROSTER.map(normalizarOrganizacion);
 /** Ids de personas agregadas manualmente (no vienen del Excel). */
 export let extraIds = new Set<string>();
 
+/** Excepciones manuales sobre la relación calculada: `evaluador|evaluado` → activo. */
+export let assignmentOverrides = new Map<string, boolean>();
+
 /** Descarga los overrides de organización y recalcula el padrón efectivo. */
 export async function loadOrg(): Promise<Persona[]> {
-  const { overrides, extra } = await fetchOrg();
+  const { overrides, extra, assignments = [] } = await fetchOrg();
   const byId = new Map(overrides.map((o) => [o.persona_id, o]));
   extraIds = new Set(extra.map((e) => e.id));
+  assignmentOverrides = new Map(
+    assignments.map((a) => [`${a.evaluador_id}|${a.evaluado_id}`, a.activo])
+  );
 
   const base: Persona[] = [
     ...ROSTER,
@@ -114,7 +120,7 @@ function n3sDelArea(all: Persona[], area: string): Persona[] {
 }
 
 /** Evaluadores asignados a un evaluado (cascada ascendente). */
-export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
+export function evaluadoresBaseDe(all: Persona[], evaluado: Persona): Persona[] {
   if (evaluado.nivel === 3) {
     const n4s = all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
     // La base operativa de Detalle corresponde solo a Lima. Los N3 de otras
@@ -149,34 +155,23 @@ export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
   return [];
 }
 
+/** Evaluadores efectivos: regla base más altas/bajas manuales guardadas. */
+export function evaluadoresDe(all: Persona[], evaluado: Persona): Persona[] {
+  const ids = new Set(evaluadoresBaseDe(all, evaluado).map((p) => p.id));
+  for (const [key, activo] of assignmentOverrides) {
+    const [evaluadorId, evaluadoId] = key.split("|");
+    if (evaluadoId !== evaluado.id) continue;
+    if (activo) ids.add(evaluadorId);
+    else ids.delete(evaluadorId);
+  }
+  return all.filter((p) => ids.has(p.id));
+}
+
 /** Personas que un evaluador debe evaluar (inverso de evaluadoresDe). */
 export function evaluadosDe(all: Persona[], evaluador: Persona): Persona[] {
-  if (evaluador.nivel === 4) {
-    const n3s = n3sDelArea(all, evaluador.area);
-    if (evaluador.area === "VENTAS LPC") {
-      // Los N4 de LPC mantienen a sus N3 y evalúan adicionalmente a Perdomo (N2).
-      return [...n3s, ...n2sDelArea(all, evaluador.area)];
-    }
-    if (n3s.length > 0) {
-      // Los N4 de Detalle incluidos en la encuesta son únicamente de Lima.
-      if (evaluador.area === "VENTAS DETALLE") {
-        return n3s.filter((p) => p.region === "LIMA");
-      }
-      return n3s;
-    }
-    // Segmento sin nivel N3 (Home Care / Supermercado): evalúa directo al N2.
-    return n2sDelArea(all, evaluador.area);
-  }
-  if (evaluador.nivel === 3) {
-    const n2s = n2sDelArea(all, evaluador.area);
-    if (n2s.length > 1 && evaluador.region) {
-      const porRegion = n2s.filter((p) => p.region === evaluador.region);
-      return porRegion.length ? porRegion : n2s;
-    }
-    return n2s;
-  }
-  if (evaluador.nivel === 2) return all.filter((p) => p.nivel === 1);
-  return [];
+  return all.filter(
+    (evaluado) => esEvaluado(evaluado) && evaluadoresDe(all, evaluado).some((p) => p.id === evaluador.id)
+  );
 }
 
 export function preguntasActivas(audiencia: Audiencia): Pregunta[] {
