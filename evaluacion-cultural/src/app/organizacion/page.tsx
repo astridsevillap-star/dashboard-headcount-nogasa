@@ -4,8 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowCounterClockwise, Plus, Trash, Users } from "@phosphor-icons/react";
 import { Button, Select, Skeleton, TextInput, useToasts, ToastStack } from "@/components/ui";
-import { areas as areasOf, evaluadoresDe, evaluadosDe, extraIds, loadOrg, NIVEL_LABEL, personas, regiones as regionesOf } from "@/lib/data";
-import { clearAdminKey, clearOverride, deleteExtra, getAdminKey, setOverride, upsertExtra } from "@/lib/backend";
+import { areas as areasOf, evaluadoresBaseDe, evaluadoresDe, evaluados, evaluadosDe, extraIds, loadOrg, NIVEL_LABEL, personas, regiones as regionesOf } from "@/lib/data";
+import { clearAdminKey, clearOverride, deleteExtra, getAdminKey, replaceAssignmentOverrides, setOverride, upsertExtra } from "@/lib/backend";
 import type { Nivel, Persona } from "@/lib/types";
 
 export default function OrganizacionPage() {
@@ -125,12 +125,122 @@ export default function OrganizacionPage() {
         </table>
       </section>
 
+      <AssignmentEditor
+        adminKey={adminKey}
+        onSaved={async () => { await loadOrg(); setVersion((n) => n + 1); }}
+        push={push}
+      />
+
       <AddPersonForm adminKey={adminKey} areaOpts={areaOpts} onAdded={async () => { await loadOrg(); setVersion((n) => n + 1); }} push={push} />
 
       {preview && <RelationPreview persona={preview} onClose={() => setPreview(null)} />}
 
       <ToastStack toasts={toasts} dismiss={dismiss} />
     </div>
+  );
+}
+
+function AssignmentEditor({
+  adminKey, onSaved, push,
+}: {
+  adminKey: string;
+  onSaved: () => Promise<void>;
+  push: (k: "ok" | "error", t: string) => void;
+}) {
+  const leaders = evaluados().filter((p) => p.area !== "DEMO");
+  const [evaluadoId, setEvaluadoId] = useState(leaders[0]?.id ?? "");
+  const evaluado = leaders.find((p) => p.id === evaluadoId) ?? leaders[0];
+  const actuales = evaluado ? evaluadoresDe(personas, evaluado) : [];
+  const [asignados, setAsignados] = useState<Set<string>>(() => new Set(actuales.map((p) => p.id)));
+  const disponibles = personas
+    .filter((p) => p.id !== evaluado?.id && !asignados.has(p.id) && p.area !== "DEMO")
+    .sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
+  const [nuevoId, setNuevoId] = useState("");
+
+  function seleccionar(id: string) {
+    setEvaluadoId(id);
+    const elegido = leaders.find((p) => p.id === id);
+    setAsignados(new Set(elegido ? evaluadoresDe(personas, elegido).map((p) => p.id) : []));
+    setNuevoId("");
+  }
+
+  function agregar() {
+    if (!nuevoId) return;
+    setAsignados((prev) => new Set(prev).add(nuevoId));
+    setNuevoId("");
+  }
+
+  function retirar(id: string) {
+    setAsignados((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  function restaurarRegla() {
+    if (!evaluado) return;
+    setAsignados(new Set(evaluadoresBaseDe(personas, evaluado).map((p) => p.id)));
+  }
+
+  async function guardar() {
+    if (!evaluado) return;
+    const base = new Set(evaluadoresBaseDe(personas, evaluado).map((p) => p.id));
+    const ids = new Set([...base, ...asignados]);
+    const overrides = Array.from(ids)
+      .filter((id) => base.has(id) !== asignados.has(id))
+      .map((id) => ({ evaluador_id: id, activo: asignados.has(id) }));
+    try {
+      await replaceAssignmentOverrides(adminKey, evaluado.id, overrides);
+      await onSaved();
+      push("ok", `Asignaciones de ${evaluado.nombre.split(" ")[0]} actualizadas.`);
+    } catch {
+      push("error", "No se pudieron guardar las asignaciones.");
+    }
+  }
+
+  if (!evaluado) return null;
+
+  return (
+    <section className="rounded-[12px] border border-line bg-surface p-5">
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-[16px] font-semibold text-ink-900">Asignaciones de evaluación</h2>
+          <p className="mt-0.5 text-[13px] text-ink-500">Seleccione un evaluado para agregar, retirar o trasladar evaluadores.</p>
+        </div>
+        <Select value={evaluado.id} onChange={(e) => seleccionar(e.target.value)} className="min-w-72">
+          {leaders.map((p) => <option key={p.id} value={p.id}>{p.nombre} · {p.area}</option>)}
+        </Select>
+      </div>
+
+      <div className="mt-4 rounded-[10px] border border-line-soft">
+        <div className="flex items-center justify-between border-b border-line-soft px-3 py-2">
+          <span className="text-[12px] font-medium text-ink-500">Evaluadores asignados ({asignados.size})</span>
+          <Button variant="ghost" size="sm" onClick={restaurarRegla}><ArrowCounterClockwise size={14} /> Restaurar regla automática</Button>
+        </div>
+        <ul className="max-h-72 divide-y divide-line-soft overflow-y-auto">
+          {personas.filter((p) => asignados.has(p.id)).map((p) => (
+            <li key={p.id} className="flex items-center justify-between gap-3 px-3 py-2">
+              <div>
+                <p className="text-[13px] font-medium text-ink-800">{p.nombre}</p>
+                <p className="text-[11px] text-ink-400">{p.cargo} · {p.area}{p.region ? ` · ${p.region}` : ""}</p>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => retirar(p.id)} title="Retirar evaluador"><Trash size={14} /></Button>
+            </li>
+          ))}
+          {asignados.size === 0 && <li className="px-3 py-6 text-center text-[13px] text-ink-400">Sin evaluadores asignados.</li>}
+        </ul>
+      </div>
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        <Select value={nuevoId} onChange={(e) => setNuevoId(e.target.value)} className="min-w-72 flex-1">
+          <option value="">Seleccione un nuevo evaluador…</option>
+          {disponibles.map((p) => <option key={p.id} value={p.id}>{p.nombre} · {p.area} · N{p.nivel}</option>)}
+        </Select>
+        <Button variant="secondary" onClick={agregar} disabled={!nuevoId}><Plus size={14} /> Agregar</Button>
+        <Button variant="primary" onClick={guardar}>Guardar asignaciones</Button>
+      </div>
+    </section>
   );
 }
 
