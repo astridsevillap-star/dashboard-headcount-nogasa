@@ -30,7 +30,7 @@ export default function LoginPage() {
       setRegistering(false);
       return;
     }
-    router.replace("/datos");
+    router.replace("/");
   }
 
   return (
