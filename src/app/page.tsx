@@ -28,10 +28,11 @@ import { EvolutionChart, LegendRow, MovimientosChart, C } from "@/components/cha
 import { GapLegend, GapMeters } from "@/components/gapmeter";
 import { MatrixTable, type CellFilter } from "@/components/matrix";
 import { DetailDrawer, type DrawerFilter } from "@/components/drawer";
+import { AuthGuard } from "@/components/auth-guard";
 
 type Modo = "activos" | "todos";
 
-export default function DashboardPage() {
+function DashboardContent() {
   const [agg, setAgg] = useState<AggRow[] | null>(null);
   const [budget, setBudget] = useState<BudgetRow[] | null>(null);
   const [rules, setRules] = useState<MergeRule[]>([]);
@@ -734,6 +735,14 @@ export default function DashboardPage() {
         onClose={() => setCell(null)}
       />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <AuthGuard>
+      <DashboardContent />
+    </AuthGuard>
   );
 }
 
