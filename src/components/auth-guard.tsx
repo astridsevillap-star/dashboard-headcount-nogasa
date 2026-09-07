@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
+import { embeddedSessionReady, supabase } from "@/lib/supabase";
 import { Skeleton } from "@/components/ui";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -13,6 +13,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     let active = true;
 
     async function verifyAccess() {
+      await embeddedSessionReady;
       const { data, error } = await supabase.auth.getUser();
       if (!active) return;
 
