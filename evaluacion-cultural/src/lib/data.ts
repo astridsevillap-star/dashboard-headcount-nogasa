@@ -117,7 +117,7 @@ export function esEvaluado(p: Persona): boolean {
  * si el área tiene un único N2, todo N3 de esa área lo evalúa sin filtrar por región.
  */
 export type GrupoEncuesta = "detalle" | "lpc" | "home-care" | "supermercados" | "provincias";
-export type SegmentoLider = "norte" | "sur" | "oriente" | "regionales" | "lima";
+export type SegmentoLider = "norte" | "sur" | "oriente" | "regionales" | "lima" | "lpc";
 export const GRUPOS_ENCUESTA: { id: GrupoEncuesta; label: string; area: string }[] = [
   { id: "detalle", label: "Detalle", area: "VENTAS DETALLE" },
   { id: "lpc", label: "LPC", area: "VENTAS LPC" },
@@ -131,7 +131,8 @@ export const SEGMENTOS_LIDERES: { id: SegmentoLider; label: string; descripcion:
   { id: "sur", label: "Jefes de ventas Sur", descripcion: "Evalúan al Jefe Regional Sur y a Ricardo Velásquez" },
   { id: "oriente", label: "Jefes de ventas Oriente", descripcion: "Evalúan al Jefe Regional Oriente y a Ricardo Velásquez" },
   { id: "regionales", label: "Jefes regionales", descripcion: "Evalúan a Ricardo Velásquez" },
-  { id: "lima", label: "Jefes de Lima", descripcion: "Evalúan a Ricardo Velásquez" },
+  { id: "lima", label: "Jefes de Lima Detalle", descripcion: "Evalúan a Carlos Acosta y a Ricardo Velásquez" },
+  { id: "lpc", label: "Jefes de LPC", descripcion: "Evalúan a Héctor Perdomo y a Ricardo Velásquez" },
 ];
 
 export function grupoDeArea(area: string): GrupoEncuesta | null {
@@ -156,7 +157,16 @@ export function evaluadosDeGrupo(all: Persona[], grupo: GrupoEncuesta): Persona[
 /** Lista visible para cada segmento anónimo del grupo Líderes de equipo. */
 export function evaluadosDeSegmentoLider(all: Persona[], segmento: SegmentoLider): Persona[] {
   const gerente = all.filter((p) => p.nivel === 1 && p.area !== DEMO_AREA);
-  if (segmento === "regionales" || segmento === "lima") return gerente;
+  if (segmento === "regionales") return gerente;
+
+  if (segmento === "lima" || segmento === "lpc") {
+    const area = segmento === "lima" ? "VENTAS DETALLE" : "VENTAS LPC";
+    const jefeLima = all.filter(
+      (p) => p.area === area && p.nivel === 2 && p.region === "LIMA"
+    );
+    return [...gerente, ...jefeLima]
+      .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
+  }
 
   const region = segmento.toUpperCase();
   const jefeRegional = all.filter(
