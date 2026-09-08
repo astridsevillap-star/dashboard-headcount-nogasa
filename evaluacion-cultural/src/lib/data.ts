@@ -116,34 +116,42 @@ export function esEvaluado(p: Persona): boolean {
  * La región solo desambigua cuando un área tiene más de un N2 (caso Detalle);
  * si el área tiene un único N2, todo N3 de esa área lo evalúa sin filtrar por región.
  */
-export type GrupoEncuesta = "detalle" | "lpc" | "home-care" | "supermercados";
+export type GrupoEncuesta = "detalle" | "lpc" | "home-care" | "supermercados" | "provincias";
 export const GRUPOS_ENCUESTA: { id: GrupoEncuesta; label: string; area: string }[] = [
   { id: "detalle", label: "Detalle", area: "VENTAS DETALLE" },
   { id: "lpc", label: "LPC", area: "VENTAS LPC" },
   { id: "home-care", label: "Home Care", area: "HOME CARE" },
   { id: "supermercados", label: "Supermercados", area: "SUPERMERCADO" },
+  { id: "provincias", label: "Provincias", area: "PROVINCIAS" },
 ];
 
 export function grupoDeArea(area: string): GrupoEncuesta | null {
   return GRUPOS_ENCUESTA.find((g) => g.area === area)?.id ?? null;
 }
 
+function esJefeDeProvincias(p: Persona): boolean {
+  return p.area === "VENTAS DETALLE" && Boolean(p.region) && p.region !== "LIMA";
+}
+
+export function grupoDePersona(p: Persona): GrupoEncuesta | null {
+  if (esJefeDeProvincias(p)) return "provincias";
+  return grupoDeArea(p.area);
+}
+
 export function evaluadosDeGrupo(all: Persona[], grupo: GrupoEncuesta): Persona[] {
-  const area = GRUPOS_ENCUESTA.find((g) => g.id === grupo)?.area;
-  if (!area) return [];
   return all
-    .filter((p) => p.area !== DEMO_AREA && (p.nivel === 1 || (p.area === area && EVALUAR_NIVELES.includes(p.nivel))))
+    .filter((p) => p.area !== DEMO_AREA && (p.nivel === 1 || (grupoDePersona(p) === grupo && EVALUAR_NIVELES.includes(p.nivel))))
     .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
 }
 
 /** Evaluadores esperados por grupo para un evaluado. */
 export function evaluadoresBaseDe(all: Persona[], evaluado: Persona): Persona[] {
-  const grupo = evaluado.nivel === 1 ? null : grupoDeArea(evaluado.area);
+  const grupo = evaluado.nivel === 1 ? null : grupoDePersona(evaluado);
   if (evaluado.nivel === 1) {
-    return all.filter((p) => p.nivel > 1 && p.area !== DEMO_AREA && grupoDeArea(p.area));
+    return all.filter((p) => p.nivel > 1 && p.area !== DEMO_AREA && grupoDePersona(p));
   }
   if (!grupo) return [];
-  return all.filter((p) => p.id !== evaluado.id && p.nivel > 1 && grupoDeArea(p.area) === grupo);
+  return all.filter((p) => p.id !== evaluado.id && p.nivel > 1 && grupoDePersona(p) === grupo);
 }
 
 /** Evaluadores efectivos: regla base más altas/bajas manuales guardadas. */
