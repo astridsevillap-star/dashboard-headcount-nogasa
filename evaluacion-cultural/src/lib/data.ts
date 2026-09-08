@@ -12,8 +12,7 @@ import type {
 } from "./types";
 import { COMPETENCIAS, PREGUNTAS, seedMetas } from "./seed";
 import { ROSTER } from "./roster";
-import { buildCodes, type CodeMap } from "./codes";
-import { fetchOrg, type Resultados } from "./backend";
+import { fetchOrg, fetchQuestions, type Resultados } from "./backend";
 
 function normalizarOrganizacion(p: Persona): Persona {
   const area = p.area === "VENTAS TOLBRIN" ? "HOME CARE" : p.area;
@@ -26,8 +25,8 @@ function normalizarOrganizacion(p: Persona): Persona {
    administradora puede editar nivel/área/región de cualquier persona, o
    agregar personas nuevas, desde /organizacion. Esos cambios se guardan en
    Supabase (ec_overrides / ec_personas_extra) y se combinan aquí para formar
-   el padrón "efectivo" que usa el resto de la app. Las preguntas y metas
-   siguen siendo fijas en el código.
+   el padrón "efectivo" que usa el resto de la app. Las preguntas también se
+   cargan desde Supabase y conservan una copia inicial en el código.
 --------------------------------------------------------------------------- */
 
 /** Padrón efectivo (base + overrides + personas agregadas). Se actualiza con loadOrg(). */
@@ -40,8 +39,13 @@ export let extraIds = new Set<string>();
 export let assignmentOverrides = new Map<string, boolean>();
 
 /** Descarga los overrides de organización y recalcula el padrón efectivo. */
+export let preguntas: Pregunta[] = PREGUNTAS.filter((q) => q.audiencia === "gerencial");
+
 export async function loadOrg(): Promise<Persona[]> {
-  const { overrides, extra, assignments = [] } = await fetchOrg();
+  const [{ overrides, extra, assignments = [] }, storedQuestions] = await Promise.all([
+    fetchOrg(),
+    fetchQuestions().catch(() => []),
+  ]);
   const byId = new Map(overrides.map((o) => [o.persona_id, o]));
   extraIds = new Set(extra.map((e) => e.id));
   assignmentOverrides = new Map(
@@ -72,7 +76,11 @@ export async function loadOrg(): Promise<Persona[]> {
     }));
   }
   personas = next;
-  codeCache = null; // el mapa de códigos depende del padrón efectivo
+  if (storedQuestions.length) {
+    preguntas = storedQuestions
+      .sort((a, b) => a.orden - b.orden)
+      .map((q) => ({ id: q.id, competenciaId: q.competencia_id, audiencia: "gerencial", texto: q.texto, activa: q.activa }));
+  }
   return personas;
 }
 
@@ -97,11 +105,7 @@ export function audienciaDe(nivel: Nivel): Audiencia {
   return nivel === 1 ? "gerencial" : "general";
 }
 export function esEvaluado(p: Persona): boolean {
-  if (!EVALUAR_NIVELES.includes(p.nivel)) return false;
-  // Los N3 regionales fuera de Lima participan como evaluadores del regional N2,
-  // pero no reciben evaluación en esta edición.
-  if (p.nivel === 3 && p.area === "VENTAS DETALLE" && p.region && p.region !== "LIMA") return false;
-  return true;
+  return EVALUAR_NIVELES.includes(p.nivel);
 }
 
 /**
@@ -112,47 +116,34 @@ export function esEvaluado(p: Persona): boolean {
  * La región solo desambigua cuando un área tiene más de un N2 (caso Detalle);
  * si el área tiene un único N2, todo N3 de esa área lo evalúa sin filtrar por región.
  */
-function n2sDelArea(all: Persona[], area: string): Persona[] {
-  return all.filter((p) => p.nivel === 2 && p.area === area);
-}
-function n3sDelArea(all: Persona[], area: string): Persona[] {
-  return all.filter((p) => p.nivel === 3 && p.area === area);
+export type GrupoEncuesta = "detalle" | "lpc" | "home-care" | "supermercados";
+export const GRUPOS_ENCUESTA: { id: GrupoEncuesta; label: string; area: string }[] = [
+  { id: "detalle", label: "Detalle", area: "VENTAS DETALLE" },
+  { id: "lpc", label: "LPC", area: "VENTAS LPC" },
+  { id: "home-care", label: "Home Care", area: "HOME CARE" },
+  { id: "supermercados", label: "Supermercados", area: "SUPERMERCADO" },
+];
+
+export function grupoDeArea(area: string): GrupoEncuesta | null {
+  return GRUPOS_ENCUESTA.find((g) => g.area === area)?.id ?? null;
 }
 
-/** Evaluadores asignados a un evaluado (cascada ascendente). */
+export function evaluadosDeGrupo(all: Persona[], grupo: GrupoEncuesta): Persona[] {
+  const area = GRUPOS_ENCUESTA.find((g) => g.id === grupo)?.area;
+  if (!area) return [];
+  return all
+    .filter((p) => p.area !== DEMO_AREA && (p.nivel === 1 || (p.area === area && EVALUAR_NIVELES.includes(p.nivel))))
+    .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
+}
+
+/** Evaluadores esperados por grupo para un evaluado. */
 export function evaluadoresBaseDe(all: Persona[], evaluado: Persona): Persona[] {
-  if (evaluado.nivel === 3) {
-    const n4s = all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
-    // La base operativa de Detalle corresponde solo a Lima. Los N3 de otras
-    // regiones evalúan al regional N2, pero no reciben evaluación de estos N4.
-    if (evaluado.area === "VENTAS DETALLE") {
-      return evaluado.region === "LIMA" ? n4s : [];
-    }
-    return n4s;
+  const grupo = evaluado.nivel === 1 ? null : grupoDeArea(evaluado.area);
+  if (evaluado.nivel === 1) {
+    return all.filter((p) => p.nivel > 1 && p.area !== DEMO_AREA && grupoDeArea(p.area));
   }
-  if (evaluado.nivel === 2) {
-    const n2s = n2sDelArea(all, evaluado.area);
-    const n3s = n3sDelArea(all, evaluado.area);
-    if (evaluado.area === "VENTAS LPC") {
-      // Regla adicional de LPC: Perdomo (N2) recibe evaluación tanto de los
-      // N3 del área como de todo el personal N4 de LPC.
-      const n4s = all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
-      return [...n3s, ...n4s];
-    }
-    if (n3s.length === 0) {
-      // segmento sin nivel N3: los vendedores del área evalúan directo al líder
-      return all.filter((p) => p.nivel === 4 && p.area === evaluado.area);
-    }
-    if (n2s.length > 1 && evaluado.region) {
-      // área con varios N2 (regiones): filtra los N3 de esa misma región
-      const porRegion = n3s.filter((p) => p.region === evaluado.region);
-      return porRegion.length ? porRegion : n3s;
-    }
-    // único N2 del área (líder de producto): todos los N3 del área lo evalúan
-    return n3s;
-  }
-  if (evaluado.nivel === 1) return all.filter((p) => p.nivel === 2);
-  return [];
+  if (!grupo) return [];
+  return all.filter((p) => p.id !== evaluado.id && p.nivel > 1 && grupoDeArea(p.area) === grupo);
 }
 
 /** Evaluadores efectivos: regla base más altas/bajas manuales guardadas. */
@@ -174,17 +165,11 @@ export function evaluadosDe(all: Persona[], evaluador: Persona): Persona[] {
   );
 }
 
-export function preguntasActivas(audiencia: Audiencia): Pregunta[] {
-  return PREGUNTAS.filter((q) => q.activa && q.audiencia === audiencia);
+export function preguntasActivas(_audiencia?: Audiencia): Pregunta[] {
+  return preguntas.filter((q) => q.activa);
 }
 export function preguntasDe(evaluado: Persona): Pregunta[] {
-  return preguntasActivas(audienciaDe(evaluado.nivel));
-}
-
-let codeCache: CodeMap | null = null;
-export function codeMap(): CodeMap {
-  if (!codeCache) codeCache = buildCodes(personas);
-  return codeCache;
+  return preguntasActivas();
 }
 
 /* ---------- catálogos derivados ---------- */

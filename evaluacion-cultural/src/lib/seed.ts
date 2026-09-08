@@ -22,13 +22,14 @@ export const COMPETENCIAS: Competencia[] = [
   { id: "integracion", nombre: "Integración" },
 ];
 
-/** Escala de respuesta (1–5). Editable en Configuración. */
+/** Escala visible. La opción 6 se registra como "sin información" y no puntúa. */
 export const ESCALA: { value: number; label: string }[] = [
   { value: 1, label: "Nunca" },
   { value: 2, label: "Casi nunca" },
   { value: 3, label: "A veces" },
   { value: 4, label: "Casi siempre" },
   { value: 5, label: "Siempre" },
+  { value: 6, label: "No tengo conocimiento suficiente para evaluar" },
 ];
 
 /** Año / edición de la evaluación. */

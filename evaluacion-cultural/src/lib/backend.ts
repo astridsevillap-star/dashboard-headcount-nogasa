@@ -70,10 +70,32 @@ export type PersonaExtra = {
   id: string; dni: string; nombre: string; cargo: string; gerencia: string; area: string; nivel: number; region: string;
 };
 
+export type PreguntaConfig = {
+  id: string;
+  competencia_id: string;
+  texto: string;
+  activa: boolean;
+  orden: number;
+};
+
 export async function fetchOrg(): Promise<{ overrides: Override[]; extra: PersonaExtra[]; assignments: AssignmentOverride[] }> {
   const { data, error } = await supabase.rpc("ec_org_get");
   if (error) throw new Error(error.message);
   return data as { overrides: Override[]; extra: PersonaExtra[]; assignments: AssignmentOverride[] };
+}
+
+export async function fetchQuestions(): Promise<PreguntaConfig[]> {
+  const { data, error } = await supabase.rpc("ec_questions_get");
+  if (error) throw new Error(error.message);
+  return (data ?? []) as PreguntaConfig[];
+}
+
+export async function replaceQuestions(adminKey: string, questions: PreguntaConfig[]) {
+  const { error } = await supabase.rpc("ec_questions_replace", {
+    p_admin_key: adminKey,
+    p_questions: questions,
+  });
+  if (error) throw new Error(error.message);
 }
 
 export async function replaceAssignmentOverrides(

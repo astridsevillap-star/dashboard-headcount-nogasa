@@ -23,8 +23,8 @@ export type Competencia = {
 
 /**
  * Audiencia del cuestionario según el nivel del evaluado.
- * · "gerencial" (20 preguntas): solo el Gerente (Nivel 1).
- * · "general" (8 preguntas): Niveles 2, 3 y 4 (todos los demás).
+ * La edición vigente usa las 20 preguntas gerenciales para todos los evaluados.
+ * Se conserva el tipo de audiencia para compatibilidad con resultados anteriores.
  */
 export type Audiencia = "gerencial" | "general";
 

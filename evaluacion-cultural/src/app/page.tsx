@@ -122,7 +122,7 @@ export default function DashboardPage() {
 
       {results.completions === 0 && (
         <div className="rounded-[12px] border border-dashed border-ink-300 bg-surface px-5 py-4 text-sm text-ink-500">
-          Aún no hay respuestas registradas. Comparte los códigos de acceso; los resultados aparecerán aquí a medida que las personas respondan.
+          Aún no hay respuestas registradas. Comparte los enlaces por grupo; los resultados aparecerán aquí a medida que las personas respondan.
         </div>
       )}
 

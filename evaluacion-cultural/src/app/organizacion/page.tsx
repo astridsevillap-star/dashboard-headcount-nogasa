@@ -95,8 +95,8 @@ export default function OrganizacionPage() {
         <div>
           <h1 className="text-[22px] font-semibold text-ink-900">Organización</h1>
           <p className="mt-0.5 max-w-2xl text-sm text-ink-500">
-            Cambia el nivel, área o región de cualquier persona: quién evalúa a quién se recalcula
-            solo, según la misma regla de cascada 90° ascendente.
+            Cambia el nivel, área o región de cualquier persona. Las evaluaciones se organizan
+            automáticamente por grupo y todos los grupos incluyen al gerente de Nivel 1.
           </p>
         </div>
         <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, cargo, área o región…" className="w-72" />
@@ -124,12 +124,6 @@ export default function OrganizacionPage() {
           </tbody>
         </table>
       </section>
-
-      <AssignmentEditor
-        adminKey={adminKey}
-        onSaved={async () => { await loadOrg(); setVersion((n) => n + 1); }}
-        push={push}
-      />
 
       <AddPersonForm adminKey={adminKey} areaOpts={areaOpts} onAdded={async () => { await loadOrg(); setVersion((n) => n + 1); }} push={push} />
 

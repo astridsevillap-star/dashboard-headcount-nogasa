@@ -30,6 +30,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
               {[
                 { href: "/", label: "Dashboard" },
                 { href: "/organizacion", label: "Organización" },
+                { href: "/preguntas", label: "Preguntas" },
               ].map((item) => {
                 const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
                 return (

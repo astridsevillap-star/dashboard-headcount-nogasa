@@ -74,7 +74,7 @@ export default function LoginPage() {
         </form>
         {error && <p className="mt-3 text-sm text-danger-600">{error}</p>}
         <p className="mt-5 border-t border-line-soft pt-4 text-[13px] text-ink-500">
-          ¿Vas a responder la encuesta? Usa tu código en{" "}
+          ¿Vas a responder la encuesta? Ingresa por tu grupo en{" "}
           <a href="/encuesta" className="font-semibold text-brand-600">Responder encuesta</a>.
         </p>
       </div>
