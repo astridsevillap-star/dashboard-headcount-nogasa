@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ArrowRight, CheckCircle, ShieldCheck, UsersThree } from "@phosphor-icons/react";
 import { Button, Skeleton, useToasts, ToastStack } from "@/components/ui";
-import { competencias, evaluadosDeGrupo, GRUPOS_ENCUESTA, loadOrg, personas, preguntasActivas, type GrupoEncuesta } from "@/lib/data";
+import { competencias, evaluadosDeGrupo, evaluadosDeSegmentoLider, GRUPOS_ENCUESTA, loadOrg, personas, preguntasActivas, SEGMENTOS_LIDERES, type GrupoEncuesta, type SegmentoLider } from "@/lib/data";
 import { submitEncuesta, yaCompleto } from "@/lib/backend";
 import { ESCALA, EDICION } from "@/lib/seed";
 import type { Pregunta } from "@/lib/types";
@@ -12,8 +12,12 @@ function isGroup(value: string | null): value is GrupoEncuesta {
   return GRUPOS_ENCUESTA.some((group) => group.id === value);
 }
 
-function participantId(group: GrupoEncuesta, fresh = false) {
-  const key = `ec_participante_${group}_v2`;
+function isLeaderSegment(value: string | null): value is SegmentoLider {
+  return SEGMENTOS_LIDERES.some((segment) => segment.id === value);
+}
+
+function participantId(group: GrupoEncuesta, segment: SegmentoLider | null, fresh = false) {
+  const key = `ec_participante_${group}_${segment ?? "general"}_v3`;
   if (fresh) window.localStorage.removeItem(key);
   let id = window.localStorage.getItem(key);
   if (!id) {
@@ -26,13 +30,16 @@ function participantId(group: GrupoEncuesta, fresh = false) {
 
 export default function EncuestaPage() {
   const [group, setGroup] = useState<GrupoEncuesta | null>(null);
+  const [leaderSegment, setLeaderSegment] = useState<SegmentoLider | null>(null);
   const [ready, setReady] = useState(false);
   const [round, setRound] = useState(0);
 
   useEffect(() => {
     loadOrg().catch(() => {}).finally(() => {
       const queryGroup = new URLSearchParams(window.location.search).get("grupo");
+      const querySegment = new URLSearchParams(window.location.search).get("segmento");
       if (isGroup(queryGroup)) setGroup(queryGroup);
+      if (isLeaderSegment(querySegment)) setLeaderSegment(querySegment);
       setReady(true);
     });
   }, []);
@@ -43,13 +50,19 @@ export default function EncuestaPage() {
     window.history.replaceState(null, "", `/encuesta?grupo=${next}`);
     setGroup(next);
   }
+  function enterLeaderSegment(next: SegmentoLider) {
+    window.history.replaceState(null, "", `/encuesta?grupo=provincias&segmento=${next}`);
+    setLeaderSegment(next);
+  }
   function exit() {
     window.history.replaceState(null, "", "/encuesta");
     setGroup(null);
+    setLeaderSegment(null);
   }
 
   if (!group) return <GroupGate onEnter={enter} />;
-  return <Survey key={`${group}-${round}`} group={group} onExit={exit} onRestart={() => { participantId(group, true); setRound((n) => n + 1); }} />;
+  if (group === "provincias" && !leaderSegment) return <LeaderSegmentGate onEnter={enterLeaderSegment} onExit={exit} />;
+  return <Survey key={`${group}-${leaderSegment ?? "general"}-${round}`} group={group} leaderSegment={leaderSegment} onExit={exit} onRestart={() => { participantId(group, leaderSegment, true); setRound((n) => n + 1); }} />;
 }
 
 function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
@@ -74,15 +87,40 @@ function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
   );
 }
 
-function Survey({ group, onExit, onRestart }: { group: GrupoEncuesta; onExit: () => void; onRestart: () => void }) {
-  const evaluated = useMemo(() => evaluadosDeGrupo(personas, group), [group]);
+function LeaderSegmentGate({ onEnter, onExit }: { onEnter: (segment: SegmentoLider) => void; onExit: () => void }) {
+  return (
+    <div className="fade-rise mx-auto max-w-5xl pt-6 md:pt-12">
+      <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Líderes de equipo</p>
+      <h1 className="mt-4 text-[clamp(34px,5vw,56px)] font-extrabold leading-[1] tracking-[-0.03em] text-ink-900">Selecciona tu segmento</h1>
+      <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta selección define a quiénes evaluarás. Tus respuestas continuarán guardándose de forma anónima.</p>
+      <div className="mt-8 grid gap-3 sm:grid-cols-2">
+        {SEGMENTOS_LIDERES.map((segment) => (
+          <button key={segment.id} onClick={() => onEnter(segment.id)} className="group flex items-center gap-4 rounded-[16px] border border-line bg-surface p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_12px_30px_rgba(13,47,100,0.10)]">
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
+            <span><span className="block text-[17px] font-semibold text-ink-900">{segment.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">{segment.descripcion}</span></span>
+            <ArrowRight size={18} weight="bold" className="ml-auto shrink-0 text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
+          </button>
+        ))}
+      </div>
+      <button onClick={onExit} className="mt-6 text-sm font-medium text-brand-600">Cambiar de grupo</button>
+    </div>
+  );
+}
+
+function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncuesta; leaderSegment: SegmentoLider | null; onExit: () => void; onRestart: () => void }) {
+  const evaluated = useMemo(
+    () => group === "provincias" && leaderSegment ? evaluadosDeSegmentoLider(personas, leaderSegment) : evaluadosDeGrupo(personas, group),
+    [group, leaderSegment]
+  );
   const questions: Pregunta[] = useMemo(() => preguntasActivas(), []);
-  const [submissionId] = useState(() => participantId(group));
+  const [submissionId] = useState(() => participantId(group, leaderSegment));
   const [questionIndex, setQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, Record<string, number>>>({});
   const [status, setStatus] = useState<"cargando" | "pendiente" | "hecho" | "enviando">("cargando");
   const { toasts, push, dismiss } = useToasts();
-  const groupLabel = GRUPOS_ENCUESTA.find((item) => item.id === group)?.label ?? group;
+  const groupLabel = leaderSegment
+    ? SEGMENTOS_LIDERES.find((item) => item.id === leaderSegment)?.label ?? leaderSegment
+    : GRUPOS_ENCUESTA.find((item) => item.id === group)?.label ?? group;
 
   useEffect(() => {
     let active = true;
