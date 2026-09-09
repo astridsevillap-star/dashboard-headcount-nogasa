@@ -127,7 +127,7 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <KpiCard label="Índice cultural" value={score(indice)} hint={`Escala 1–5 · meta ${score(meta)}`}
+        <KpiCard label="Índice de liderazgo" value={score(indice)} hint={`Escala 1–5 · meta ${score(meta)}`}
           tone={brecha === null ? "neutral" : brecha >= 0 ? "ok" : brecha >= -0.5 ? "warn" : "bad"} />
         <KpiCard label="Brecha vs meta" value={brecha === null ? "–" : signedScore(brecha)} hint={`Objetivo general ${score(meta)}`}
           tone={brecha === null ? "neutral" : brecha >= 0 ? "ok" : brecha >= -0.5 ? "warn" : "bad"} />
@@ -145,7 +145,7 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
         <div className="lg:col-span-2">
-          <SectionCard title="Ranking de evaluados" desc="Índice cultural (mayor a menor)">
+          <SectionCard title="Ranking de evaluados" desc="Índice de liderazgo (mayor a menor)">
             <div className="flex max-h-[320px] flex-col overflow-y-auto">
               {rank.length === 0 && <p className="py-8 text-center text-sm text-ink-500">Sin datos.</p>}
               {rank.map((r, i) => (
