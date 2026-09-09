@@ -31,15 +31,18 @@ function participantId(group: GrupoEncuesta, segment: SegmentoLider | null, fres
 export default function EncuestaPage() {
   const [group, setGroup] = useState<GrupoEncuesta | null>(null);
   const [leaderSegment, setLeaderSegment] = useState<SegmentoLider | null>(null);
+  const [showInstructions, setShowInstructions] = useState(true);
   const [ready, setReady] = useState(false);
   const [round, setRound] = useState(0);
 
   useEffect(() => {
     loadOrg().catch(() => {}).finally(() => {
-      const queryGroup = new URLSearchParams(window.location.search).get("grupo");
-      const querySegment = new URLSearchParams(window.location.search).get("segmento");
+      const params = new URLSearchParams(window.location.search);
+      const queryGroup = params.get("grupo");
+      const querySegment = params.get("segmento");
       if (isGroup(queryGroup)) setGroup(queryGroup);
       if (isLeaderSegment(querySegment)) setLeaderSegment(querySegment);
+      if (isGroup(queryGroup) || params.get("inicio") === "1") setShowInstructions(false);
       setReady(true);
     });
   }, []);
@@ -49,6 +52,10 @@ export default function EncuestaPage() {
   function enter(next: GrupoEncuesta) {
     window.history.replaceState(null, "", `/encuesta?grupo=${next}`);
     setGroup(next);
+  }
+  function start() {
+    window.history.replaceState(null, "", "/encuesta?inicio=1");
+    setShowInstructions(false);
   }
   function enterLeaderSegment(next: SegmentoLider) {
     window.history.replaceState(null, "", `/encuesta?grupo=provincias&segmento=${next}`);
@@ -60,9 +67,60 @@ export default function EncuestaPage() {
     setLeaderSegment(null);
   }
 
+  if (showInstructions) return <InstructionsPage onStart={start} />;
   if (!group) return <GroupGate onEnter={enter} />;
   if (group === "provincias" && !leaderSegment) return <LeaderSegmentGate onEnter={enterLeaderSegment} onExit={exit} />;
   return <Survey key={`${group}-${leaderSegment ?? "general"}-${round}`} group={group} leaderSegment={leaderSegment} onExit={exit} onRestart={() => { participantId(group, leaderSegment, true); setRound((n) => n + 1); }} />;
+}
+
+function InstructionsPage({ onStart }: { onStart: () => void }) {
+  const competencies = [
+    ["Creatividad", "Generación de ideas, soluciones y mejora continua."],
+    ["Autonomía", "Delegación, desarrollo y capacidad para asumir responsabilidades."],
+    ["Competitividad", "Orientación a resultados, excelencia y cumplimiento."],
+    ["Empatía", "Escucha, comunicación respetuosa y comprensión de las personas."],
+    ["Integración", "Colaboración, coordinación y construcción de equipos."],
+  ];
+
+  return (
+    <div className="fade-rise mx-auto max-w-5xl py-6 md:py-10">
+      <div className="max-w-4xl">
+        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Evaluación 2026</p>
+        <h1 className="mt-4 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-ink-900">Evaluación de Liderazgo Comercial</h1>
+        <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta evaluación busca conocer cómo se manifiestan determinadas conductas de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
+      </div>
+
+      <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="rounded-[18px] border border-line bg-surface p-6">
+          <h2 className="text-xl font-semibold text-ink-900">Antes de comenzar</h2>
+          <ol className="mt-4 space-y-3 text-sm leading-relaxed text-ink-500">
+            <li><span className="mr-2 font-semibold text-brand-600">1.</span>Selecciona el grupo o segmento al que perteneces.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">2.</span>Responde considerando únicamente conductas que hayas observado.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">3.</span>Utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de enviar la evaluación.</li>
+          </ol>
+          <div className="mt-5 flex items-start gap-2.5 rounded-[12px] bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-700"><ShieldCheck size={20} weight="fill" className="mt-px shrink-0" />La encuesta no solicita nombre ni DNI. Las respuestas se registran de forma anónima y se presentan de manera consolidada.</div>
+        </section>
+
+        <section className="rounded-[18px] border border-line bg-surface p-6">
+          <h2 className="text-xl font-semibold text-ink-900">Competencias evaluadas</h2>
+          <p className="mt-2 text-sm leading-relaxed text-ink-500">Se medirán cinco competencias mediante comportamientos observables:</p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            {competencies.map(([name, description]) => (
+              <div key={name} className="rounded-[12px] border border-line p-4">
+                <p className="text-sm font-semibold text-ink-900">{name}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">{description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button variant="primary" onClick={onStart}>Comenzar evaluación <ArrowRight size={17} weight="bold" /></Button>
+      </div>
+    </div>
+  );
 }
 
 function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
@@ -128,7 +186,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
     return () => { active = false; };
   }, [submissionId]);
 
-  if (!evaluated.length) return <Centered title="Este grupo no tiene líderes asignados" onExit={onExit}>Verifica la configuración con Gestión de Personas.</Centered>;
+  if (!evaluated.length) return <Centered title="Este grupo no tiene líderes asignados" onExit={onExit}>Verifica la configuración con la administración de la evaluación.</Centered>;
   if (!questions.length) return <Centered title="No hay preguntas activas" onExit={onExit}>Verifica el cuestionario en Administración.</Centered>;
   if (status === "cargando") return <div className="mx-auto max-w-3xl pt-10"><Skeleton className="h-64 w-full" /></div>;
   if (status === "hecho") return <Centered title="¡Gracias por tu evaluación!" icon onExit={onExit} secondaryLabel="Registrar otra respuesta de este grupo" onSecondary={onRestart}>Tus respuestas fueron registradas de forma anónima.</Centered>;
