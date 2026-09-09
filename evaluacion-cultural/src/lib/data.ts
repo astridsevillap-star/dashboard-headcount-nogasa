@@ -149,6 +149,15 @@ export function grupoDePersona(p: Persona): GrupoEncuesta | null {
 }
 
 export function evaluadosDeGrupo(all: Persona[], grupo: GrupoEncuesta): Persona[] {
+  if (grupo === "provincias") {
+    return all
+      .filter((p) =>
+        p.area !== DEMO_AREA &&
+        (p.nivel === 1 ||
+          (p.nivel === 2 && ["VENTAS DETALLE", "VENTAS LPC", "HOME CARE"].includes(p.area)))
+      )
+      .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
+  }
   return all
     .filter((p) => p.area !== DEMO_AREA && (p.nivel === 1 || (grupoDePersona(p) === grupo && EVALUAR_NIVELES.includes(p.nivel))))
     .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
