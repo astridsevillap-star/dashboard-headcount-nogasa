@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Evaluación de Liderazgo Comercial · Panel de evaluados",
+  title: "Pulso de Liderazgo Comercial · Panel de resultados",
   description:
-    "Plataforma de Evaluación de Liderazgo Comercial: resultados por evaluado y competencia, brechas contra la meta y detalle por persona.",
+    "Plataforma del Pulso de Liderazgo Comercial: resultados por líder y competencia, brechas contra la meta y detalle por persona.",
 };
 
 export default function RootLayout({
