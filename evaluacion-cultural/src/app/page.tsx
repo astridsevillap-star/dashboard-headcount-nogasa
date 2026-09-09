@@ -93,7 +93,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight text-ink-900">Dashboard de resultados</h1>
           <p className="mt-0.5 text-sm text-ink-500">
-            Evaluación de Liderazgo Comercial {EDICION} · {set.length} líderes · {results.completions} evaluaciones recibidas
+            Pulso de Liderazgo Comercial {EDICION} · {set.length} líderes · {results.completions} respuestas recibidas
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -145,7 +145,7 @@ export default function DashboardPage() {
           </SectionCard>
         </div>
         <div className="lg:col-span-2">
-          <SectionCard title="Ranking de evaluados" desc="Índice de liderazgo (mayor a menor)">
+          <SectionCard title="Ranking de líderes" desc="Índice de liderazgo (mayor a menor)">
             <div className="flex max-h-[320px] flex-col overflow-y-auto">
               {rank.length === 0 && <p className="py-8 text-center text-sm text-ink-500">Sin datos.</p>}
               {rank.map((r, i) => (
