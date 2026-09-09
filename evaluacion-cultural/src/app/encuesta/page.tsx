@@ -89,7 +89,7 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
         <div className="relative max-w-4xl">
           <p className="inline-flex rounded-full bg-danger-500 px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Evaluación 2026</p>
           <h1 className="mt-5 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Evaluación de Liderazgo Comercial</h1>
-          <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-brand-100">Esta evaluación busca conocer cómo se manifiestan determinadas conductas de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
+          <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-brand-100">Esta herramienta busca conocer cómo se manifiestan los estilos de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
         </div>
       </div>
 
@@ -103,7 +103,7 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
             <li><span className="mr-2 font-semibold text-brand-600">3.</span>Utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
             <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de enviar la evaluación.</li>
           </ol>
-          <div className="mt-5 flex items-start gap-2.5 rounded-[14px] border border-brand-100 bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-800"><ShieldCheck size={22} weight="fill" className="mt-px shrink-0 text-brand-600" />La encuesta no solicita nombre ni DNI. Las respuestas se registran de forma anónima y se presentan de manera consolidada.</div>
+          <div className="mt-5 flex items-start gap-2.5 rounded-[14px] border border-brand-100 bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-800"><ShieldCheck size={22} weight="fill" className="mt-px shrink-0 text-brand-600" />Esta herramienta no solicita datos de identificación personal; por ello, las respuestas se mantienen anónimas.</div>
         </section>
 
         <section className="rounded-[20px] border border-brand-100 bg-surface p-6 shadow-[0_12px_35px_rgba(13,47,100,0.08)]">
