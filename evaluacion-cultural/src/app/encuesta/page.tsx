@@ -133,15 +133,19 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
 function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
   return (
     <div className="fade-rise mx-auto max-w-5xl pt-6 md:pt-12">
-      <div className="max-w-3xl">
-        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Acceso por grupo</p>
-        <h1 className="mt-4 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-ink-900">Evaluación de Liderazgo Comercial</h1>
-        <p className="mt-5 text-[16px] leading-relaxed text-ink-500">Selecciona el grupo al que perteneces. No necesitas código personal y tus respuestas se guardarán de forma anónima.</p>
-        <div className="mt-4 flex items-start gap-2.5 text-[13px] text-ink-500"><ShieldCheck size={18} weight="fill" className="mt-px shrink-0 text-brand-600" />La plataforma no solicita tu nombre ni tu DNI.</div>
+      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-brand-900 to-brand-600 p-7 shadow-[0_18px_50px_rgba(13,47,100,0.20)] sm:p-9">
+        <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border-[34px] border-white/10" />
+        <div className="relative max-w-3xl">
+          <p className="inline-flex rounded-full bg-danger-500 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Acceso por grupo</p>
+          <h1 className="mt-4 text-[clamp(36px,5vw,58px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Evaluación de Liderazgo Comercial</h1>
+          <p className="mt-5 text-[16px] leading-relaxed text-brand-100">Selecciona el grupo al que perteneces. No necesitas código personal y tus respuestas se guardarán de forma anónima.</p>
+          <div className="mt-4 flex items-start gap-2.5 text-[13px] text-white/85"><ShieldCheck size={18} weight="fill" className="mt-px shrink-0 text-white" />La plataforma no solicita tu nombre ni tu DNI.</div>
+        </div>
       </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {GRUPOS_ENCUESTA.map((group) => (
-          <button key={group.id} onClick={() => onEnter(group.id)} className="group flex items-center gap-4 rounded-[16px] border border-line bg-surface p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_12px_30px_rgba(13,47,100,0.10)]">
+        {GRUPOS_ENCUESTA.map((group, index) => (
+          <button key={group.id} onClick={() => onEnter(group.id)} className="group relative overflow-hidden flex items-center gap-4 rounded-[16px] border border-brand-100 bg-surface p-5 text-left shadow-[0_8px_24px_rgba(13,47,100,0.06)] transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_14px_34px_rgba(13,47,100,0.14)]">
+            <span className={`absolute inset-y-0 left-0 w-1.5 ${index % 2 === 0 ? "bg-brand-600" : "bg-danger-500"}`} />
             <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
             <span><span className="block text-[17px] font-semibold text-ink-900">{group.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">Ingresar a la encuesta</span></span>
             <ArrowRight size={18} weight="bold" className="ml-auto text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
@@ -155,12 +159,15 @@ function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
 function LeaderSegmentGate({ onEnter, onExit }: { onEnter: (segment: SegmentoLider) => void; onExit: () => void }) {
   return (
     <div className="fade-rise mx-auto max-w-5xl pt-6 md:pt-12">
-      <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Líderes de equipo</p>
-      <h1 className="mt-4 text-[clamp(34px,5vw,56px)] font-extrabold leading-[1] tracking-[-0.03em] text-ink-900">Selecciona tu segmento</h1>
-      <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta selección define a quiénes evaluarás. Tus respuestas continuarán guardándose de forma anónima.</p>
+      <div className="rounded-[22px] border border-brand-100 bg-gradient-to-r from-brand-50 to-surface p-7 shadow-[0_14px_40px_rgba(13,47,100,0.10)] sm:p-9">
+        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Líderes de equipo</p>
+        <h1 className="mt-4 text-[clamp(34px,5vw,56px)] font-extrabold leading-[1] tracking-[-0.03em] text-brand-900">Selecciona tu segmento</h1>
+        <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta selección define a quiénes evaluarás. Tus respuestas continuarán guardándose de forma anónima.</p>
+      </div>
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {SEGMENTOS_LIDERES.map((segment) => (
-          <button key={segment.id} onClick={() => onEnter(segment.id)} className="group flex items-center gap-4 rounded-[16px] border border-line bg-surface p-5 text-left transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_12px_30px_rgba(13,47,100,0.10)]">
+        {SEGMENTOS_LIDERES.map((segment, index) => (
+          <button key={segment.id} onClick={() => onEnter(segment.id)} className="group relative overflow-hidden flex items-center gap-4 rounded-[16px] border border-brand-100 bg-surface p-5 text-left shadow-[0_8px_24px_rgba(13,47,100,0.06)] transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_14px_34px_rgba(13,47,100,0.14)]">
+            <span className={`absolute inset-y-0 left-0 w-1.5 ${index % 2 === 0 ? "bg-brand-600" : "bg-danger-500"}`} />
             <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
             <span><span className="block text-[17px] font-semibold text-ink-900">{segment.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">{segment.descripcion}</span></span>
             <ArrowRight size={18} weight="bold" className="ml-auto shrink-0 text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
@@ -224,21 +231,22 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
   const competency = competencias.find((item) => item.id === question.competenciaId)?.nombre ?? "";
   return (
     <div className="fade-rise mx-auto flex max-w-5xl flex-col gap-4">
-      <div className="flex items-center justify-between gap-3 pt-2">
-        <div><span className="text-[12px] font-semibold uppercase tracking-wide text-brand-600">Evaluación de Liderazgo Comercial {EDICION} · {groupLabel}</span><p className="text-[13px] text-ink-500">Evaluando a {evaluated.length} líderes</p></div>
-        <button onClick={onExit} className="text-sm font-medium text-ink-500 hover:text-ink-900">Cambiar grupo</button>
+      <div className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-100 bg-brand-50 px-4 py-3">
+        <div><span className="text-[12px] font-semibold uppercase tracking-wide text-brand-700">Evaluación de Liderazgo Comercial {EDICION} · {groupLabel}</span><p className="text-[13px] text-ink-500">Evaluando a {evaluated.length} líderes</p></div>
+        <button onClick={onExit} className="text-sm font-medium text-brand-700 hover:text-brand-900">Cambiar grupo</button>
       </div>
-      <div className="rounded-[14px] border border-line bg-surface p-6">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-600">{competency} · Pregunta {questionIndex + 1} de {questions.length}</p>
-        <h1 className="mt-2 text-[22px] font-semibold leading-snug text-ink-900">{question.texto}</h1>
-        <p className="mt-1.5 text-sm text-ink-500">Aplica el mismo criterio a cada líder según lo que hayas observado.</p>
+      <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-r from-brand-900 to-brand-700 p-6 shadow-[0_14px_38px_rgba(13,47,100,0.18)]">
+        <span className="absolute right-0 top-0 h-full w-2 bg-danger-500" />
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-200">{competency} · Pregunta {questionIndex + 1} de {questions.length}</p>
+        <h1 className="mt-2 pr-3 text-[22px] font-semibold leading-snug text-white">{question.texto}</h1>
+        <p className="mt-1.5 text-sm text-brand-100">Aplica el mismo criterio a cada líder según lo que hayas observado.</p>
       </div>
       <div className="flex flex-col gap-3">
         {evaluated.map((person) => {
           const value = answers[question.id]?.[person.id];
           return (
-            <div key={person.id} className="rounded-[14px] border border-line bg-surface p-4">
-              <div className="mb-3 flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-ink-900 text-[13px] font-bold text-white">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div><div><p className="text-sm font-semibold text-ink-900">{person.nombre}</p><p className="text-[12px] text-ink-500">{person.cargo}</p></div><span className={`ml-auto text-[11px] font-semibold uppercase tracking-wide ${value !== undefined ? "text-ok-600" : "text-ink-400"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span></div>
+            <div key={person.id} className={`rounded-[16px] border bg-surface p-4 shadow-[0_6px_20px_rgba(13,47,100,0.05)] transition-colors ${value !== undefined ? "border-ok-100" : "border-brand-100"}`}>
+              <div className="mb-3 flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-gradient-to-br from-brand-700 to-brand-900 text-[13px] font-bold text-white shadow-sm">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div><div><p className="text-sm font-semibold text-ink-900">{person.nombre}</p><p className="text-[12px] text-ink-500">{person.cargo}</p></div><span className={`ml-auto rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span></div>
               <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
                 {ESCALA.map((option) => <button key={option.value} onClick={() => setCell(person.id, option.value)} className={`rounded-[10px] border px-2 py-2.5 text-[12px] leading-tight transition-colors ${value === option.value ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"}`}><span className="tnum mr-1 font-mono font-semibold">{option.value}</span>{option.label}</button>)}
               </div>
@@ -246,7 +254,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
           );
         })}
       </div>
-      <div className="sticky bottom-4 flex items-center gap-3 rounded-[14px] border border-line bg-surface/95 p-4 shadow-[0_8px_24px_rgba(23,23,26,0.08)] backdrop-blur"><span className="text-[13px] text-ink-500">{completed} de {questions.length} preguntas completas</span><div className="ml-auto flex items-center gap-2"><Button variant="secondary" onClick={() => setQuestionIndex((index) => Math.max(0, index - 1))} disabled={questionIndex === 0}>Anterior</Button>{questionIndex < questions.length - 1 ? <Button variant="primary" onClick={() => setQuestionIndex((index) => Math.min(questions.length - 1, index + 1))} disabled={!questionComplete(question.id)}>Siguiente</Button> : <Button variant="primary" onClick={finish} disabled={!allReady || status === "enviando"}>{status === "enviando" ? "Enviando…" : "Finalizar y enviar"}</Button>}</div></div>
+      <div className="sticky bottom-4 flex items-center gap-3 rounded-[14px] border border-brand-200 bg-surface/95 p-4 shadow-[0_10px_30px_rgba(13,47,100,0.14)] backdrop-blur"><span className="rounded-full bg-brand-50 px-3 py-1.5 text-[13px] font-medium text-brand-700">{completed} de {questions.length} preguntas completas</span><div className="ml-auto flex items-center gap-2"><Button variant="secondary" onClick={() => setQuestionIndex((index) => Math.max(0, index - 1))} disabled={questionIndex === 0}>Anterior</Button>{questionIndex < questions.length - 1 ? <Button variant="primary" onClick={() => setQuestionIndex((index) => Math.min(questions.length - 1, index + 1))} disabled={!questionComplete(question.id)}>Siguiente</Button> : <Button variant="primary" onClick={finish} disabled={!allReady || status === "enviando"}>{status === "enviando" ? "Enviando…" : "Finalizar y enviar"}</Button>}</div></div>
       <ToastStack toasts={toasts} dismiss={dismiss} />
     </div>
   );
