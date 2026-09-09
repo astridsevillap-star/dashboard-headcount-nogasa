@@ -31,10 +31,10 @@ export default function LoginPage() {
       <div>
         <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-brand-600">Panel administrativo</p>
         <h1 className="mt-5 text-[clamp(40px,6.5vw,68px)] font-extrabold leading-[0.98] tracking-[-0.03em] text-ink-900" style={{ textWrap: "balance" }}>
-          Resultados de la evaluación cultural.
+          Resultados de la Evaluación de Liderazgo Comercial.
         </h1>
         <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-ink-500">
-          Consulta los resultados consolidados de la Evaluación cultural {EDICION}: índice por
+          Consulta los resultados consolidados de la Evaluación de Liderazgo Comercial {EDICION}: índice por
           competencia, ranking y detalle por líder. Acceso reservado a Gestión de Personas.
         </p>
         <div className="mt-8 flex items-start gap-2.5 text-[13px] text-ink-500">
