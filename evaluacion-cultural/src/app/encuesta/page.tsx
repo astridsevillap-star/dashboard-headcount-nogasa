@@ -41,7 +41,7 @@ export default function EncuestaPage() {
       const queryGroup = params.get("grupo");
       const querySegment = params.get("segmento");
       if (isGroup(queryGroup)) setGroup(queryGroup);
-      if (isLeaderSegment(querySegment)) setLeaderSegment(querySegment);
+      if (queryGroup !== "provincias" && isLeaderSegment(querySegment)) setLeaderSegment(querySegment);
       if (isGroup(queryGroup) || params.get("inicio") === "1") setShowInstructions(false);
       setReady(true);
     });
@@ -69,7 +69,6 @@ export default function EncuestaPage() {
 
   if (showInstructions) return <InstructionsPage onStart={start} />;
   if (!group) return <GroupGate onEnter={enter} />;
-  if (group === "provincias" && !leaderSegment) return <LeaderSegmentGate onEnter={enterLeaderSegment} onExit={exit} />;
   return <Survey key={`${group}-${leaderSegment ?? "general"}-${round}`} group={group} leaderSegment={leaderSegment} onExit={exit} onRestart={() => { participantId(group, leaderSegment, true); setRound((n) => n + 1); }} />;
 }
 
