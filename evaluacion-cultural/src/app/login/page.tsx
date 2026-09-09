@@ -35,7 +35,7 @@ export default function LoginPage() {
         </h1>
         <p className="mt-6 max-w-xl text-[16px] leading-relaxed text-ink-500">
           Consulta los resultados consolidados de la Evaluación de Liderazgo Comercial {EDICION}: índice por
-          competencia, ranking y detalle por líder. Acceso reservado a Gestión de Personas.
+          competencia, ranking y detalle por líder. Acceso reservado a la administración.
         </p>
         <div className="mt-8 flex items-start gap-2.5 text-[13px] text-ink-500">
           <ChartBar size={18} weight="fill" className="mt-px shrink-0 text-brand-600" />
