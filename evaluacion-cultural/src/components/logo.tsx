@@ -15,8 +15,8 @@ export function Wordmark({ size = 34 }: { size?: number }) {
     <span className="flex items-center gap-2.5">
       <LogoMark size={size} />
       <span className="leading-tight">
-        <span className="block text-[15px] font-bold tracking-tight text-ink-900">Cultura</span>
-        <span className="block text-[11px] text-ink-500">Gestión de Personas</span>
+        <span className="block text-[15px] font-bold tracking-tight text-ink-900">Liderazgo</span>
+        <span className="block text-[11px] text-ink-500">Comercial</span>
       </span>
     </span>
   );
