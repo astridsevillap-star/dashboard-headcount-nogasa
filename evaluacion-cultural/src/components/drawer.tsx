@@ -67,7 +67,7 @@ export function EvaluadoDrawer({
         </div>
 
         <div className="grid grid-cols-3 gap-px border-b border-line bg-line">
-          <Stat label="Índice cultural" value={score(indice)} />
+          <Stat label="Índice de liderazgo" value={score(indice)} />
           <Stat label={`Brecha vs ${score(meta)}`} value={indice === null ? "–" : signedScore(indice - meta)} tone={toneText(indice === null ? null : indice - meta)} />
           <Stat label="Participación" value={part.esperados ? pct(cobertura) : "–"} hint={`${part.respondientes}/${part.esperados}`} />
         </div>
