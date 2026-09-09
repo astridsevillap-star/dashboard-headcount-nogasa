@@ -87,8 +87,8 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
         <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[42px] border-white/10" />
         <div className="absolute -bottom-20 right-28 h-44 w-44 rounded-full bg-danger-500/20 blur-2xl" />
         <div className="relative max-w-4xl">
-          <p className="inline-flex rounded-full bg-danger-500 px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Evaluación 2026</p>
-          <h1 className="mt-5 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Evaluación de Liderazgo Comercial</h1>
+          <p className="inline-flex rounded-full bg-danger-500 px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Pulso 2026</p>
+          <h1 className="mt-5 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Pulso de Liderazgo Comercial</h1>
           <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-brand-100">Esta herramienta busca conocer cómo se manifiestan los estilos de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
         </div>
       </div>
@@ -101,7 +101,7 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
             <li><span className="mr-2 font-semibold text-brand-600">1.</span>Selecciona el grupo o segmento al que perteneces.</li>
             <li><span className="mr-2 font-semibold text-brand-600">2.</span>Responde considerando únicamente conductas que hayas observado.</li>
             <li><span className="mr-2 font-semibold text-brand-600">3.</span>Utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
-            <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de enviar la evaluación.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de finalizar.</li>
           </ol>
           <div className="mt-5 flex items-start gap-2.5 rounded-[14px] border border-brand-100 bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-800"><ShieldCheck size={22} weight="fill" className="mt-px shrink-0 text-brand-600" />Esta herramienta no solicita datos de identificación personal; por ello, las respuestas se mantienen anónimas.</div>
         </section>
@@ -123,7 +123,7 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
       </div>
 
       <div className="mt-6 flex justify-end rounded-[16px] bg-brand-50 px-5 py-4">
-        <Button variant="primary" onClick={onStart}>Comenzar evaluación <ArrowRight size={17} weight="bold" /></Button>
+        <Button variant="primary" onClick={onStart}>Comenzar <ArrowRight size={17} weight="bold" /></Button>
       </div>
     </div>
   );
@@ -136,7 +136,7 @@ function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
         <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border-[34px] border-white/10" />
         <div className="relative max-w-3xl">
           <p className="inline-flex rounded-full bg-danger-500 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Acceso por grupo</p>
-          <h1 className="mt-4 text-[clamp(36px,5vw,58px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Evaluación de Liderazgo Comercial</h1>
+          <h1 className="mt-4 text-[clamp(36px,5vw,58px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Pulso de Liderazgo Comercial</h1>
           <p className="mt-5 text-[16px] leading-relaxed text-brand-100">Selecciona el grupo al que perteneces. No necesitas código personal y tus respuestas se guardarán de forma anónima.</p>
           <div className="mt-4 flex items-start gap-2.5 text-[13px] text-white/85"><ShieldCheck size={18} weight="fill" className="mt-px shrink-0 text-white" />La plataforma no solicita tu nombre ni tu DNI.</div>
         </div>
@@ -146,7 +146,7 @@ function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
           <button key={group.id} onClick={() => onEnter(group.id)} className="group relative overflow-hidden flex items-center gap-4 rounded-[16px] border border-brand-100 bg-surface p-5 text-left shadow-[0_8px_24px_rgba(13,47,100,0.06)] transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_14px_34px_rgba(13,47,100,0.14)]">
             <span className={`absolute inset-y-0 left-0 w-1.5 ${index % 2 === 0 ? "bg-brand-600" : "bg-danger-500"}`} />
             <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
-            <span><span className="block text-[17px] font-semibold text-ink-900">{group.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">Ingresar a la encuesta</span></span>
+            <span><span className="block text-[17px] font-semibold text-ink-900">{group.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">Ingresar</span></span>
             <ArrowRight size={18} weight="bold" className="ml-auto text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
           </button>
         ))}
@@ -200,9 +200,9 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
   }, [submissionId]);
 
   if (!evaluated.length) return <Centered title="Este grupo no tiene líderes asignados" onExit={onExit}>Verifica la configuración con la administración de la evaluación.</Centered>;
-  if (!questions.length) return <Centered title="No hay preguntas activas" onExit={onExit}>Verifica el cuestionario en Administración.</Centered>;
+  if (!questions.length) return <Centered title="No hay afirmaciones activas" onExit={onExit}>Verifica el contenido en Administración.</Centered>;
   if (status === "cargando") return <div className="mx-auto max-w-3xl pt-10"><Skeleton className="h-64 w-full" /></div>;
-  if (status === "hecho") return <Centered title="¡Gracias por tu evaluación!" icon onExit={onExit} secondaryLabel="Registrar otra respuesta de este grupo" onSecondary={onRestart}>Tus respuestas fueron registradas de forma anónima.</Centered>;
+  if (status === "hecho") return <Centered title="¡Gracias por participar!" icon onExit={onExit} secondaryLabel="Registrar otra participación de este grupo" onSecondary={onRestart}>Tus respuestas fueron registradas de forma anónima.</Centered>;
 
   const question = questions[questionIndex];
   const setCell = (evaluatedId: string, value: number) => setAnswers((previous) => ({ ...previous, [question.id]: { ...previous[question.id], [evaluatedId]: value } }));
@@ -231,7 +231,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
   return (
     <div className="fade-rise mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-100 bg-brand-50 px-4 py-3">
-        <div><span className="text-[12px] font-semibold uppercase tracking-wide text-brand-700">Evaluación de Liderazgo Comercial {EDICION} · {groupLabel}</span><p className="text-[13px] text-ink-500">Evaluando a {evaluated.length} líderes</p></div>
+        <div><span className="text-[12px] font-semibold uppercase tracking-wide text-brand-700">Pulso de Liderazgo Comercial {EDICION} · {groupLabel}</span><p className="text-[13px] text-ink-500">Líderes incluidos: {evaluated.length}</p></div>
         <button onClick={onExit} className="text-sm font-medium text-brand-700 hover:text-brand-900">Cambiar grupo</button>
       </div>
       <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-r from-brand-900 to-brand-700 p-6 shadow-[0_14px_38px_rgba(13,47,100,0.18)]">
