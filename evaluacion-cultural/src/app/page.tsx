@@ -93,7 +93,7 @@ export default function DashboardPage() {
         <div>
           <h1 className="text-[22px] font-semibold tracking-tight text-ink-900">Dashboard de resultados</h1>
           <p className="mt-0.5 text-sm text-ink-500">
-            Evaluación cultural {EDICION} · {set.length} líderes · {results.completions} evaluaciones recibidas
+            Evaluación de Liderazgo Comercial {EDICION} · {set.length} líderes · {results.completions} evaluaciones recibidas
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
