@@ -75,48 +75,55 @@ export default function EncuestaPage() {
 
 function InstructionsPage({ onStart }: { onStart: () => void }) {
   const competencies = [
-    ["Creatividad", "Generación de ideas, soluciones y mejora continua."],
-    ["Autonomía", "Delegación, desarrollo y capacidad para asumir responsabilidades."],
-    ["Competitividad", "Orientación a resultados, excelencia y cumplimiento."],
-    ["Empatía", "Escucha, comunicación respetuosa y comprensión de las personas."],
-    ["Integración", "Colaboración, coordinación y construcción de equipos."],
+    { name: "Creatividad", description: "Generación de ideas, soluciones y mejora continua.", tone: "border-brand-200 bg-brand-50/70" },
+    { name: "Autonomía", description: "Delegación, desarrollo y capacidad para asumir responsabilidades.", tone: "border-ok-100 bg-ok-50/70" },
+    { name: "Competitividad", description: "Orientación a resultados, excelencia y cumplimiento.", tone: "border-warn-100 bg-warn-50/70" },
+    { name: "Empatía", description: "Escucha, comunicación respetuosa y comprensión de las personas.", tone: "border-danger-100 bg-danger-50/60" },
+    { name: "Integración", description: "Colaboración, coordinación y construcción de equipos.", tone: "border-brand-200 bg-brand-25" },
   ];
 
   return (
-    <div className="fade-rise mx-auto max-w-5xl py-6 md:py-10">
-      <div className="max-w-4xl">
-        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Evaluación 2026</p>
-        <h1 className="mt-4 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-ink-900">Evaluación de Liderazgo Comercial</h1>
-        <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta evaluación busca conocer cómo se manifiestan determinadas conductas de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
+    <div className="fade-rise mx-auto max-w-5xl py-5 md:py-9">
+      <div className="relative overflow-hidden rounded-[26px] bg-gradient-to-br from-brand-900 via-brand-800 to-brand-600 px-6 py-9 shadow-[0_24px_70px_rgba(13,47,100,0.24)] sm:px-10 md:py-12">
+        <div className="absolute -right-16 -top-20 h-64 w-64 rounded-full border-[42px] border-white/10" />
+        <div className="absolute -bottom-20 right-28 h-44 w-44 rounded-full bg-danger-500/20 blur-2xl" />
+        <div className="relative max-w-4xl">
+          <p className="inline-flex rounded-full bg-danger-500 px-3.5 py-1.5 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Evaluación 2026</p>
+          <h1 className="mt-5 text-[clamp(38px,6vw,68px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Evaluación de Liderazgo Comercial</h1>
+          <p className="mt-5 max-w-3xl text-[16px] leading-relaxed text-brand-100">Esta evaluación busca conocer cómo se manifiestan determinadas conductas de liderazgo en la gestión comercial. Los resultados permitirán reconocer fortalezas e identificar oportunidades de desarrollo.</p>
+        </div>
       </div>
 
-      <div className="mt-8 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="rounded-[18px] border border-line bg-surface p-6">
-          <h2 className="text-xl font-semibold text-ink-900">Antes de comenzar</h2>
+      <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+        <section className="rounded-[20px] border border-brand-100 bg-surface p-6 shadow-[0_12px_35px_rgba(13,47,100,0.08)]">
+          <div className="mb-5 h-1.5 w-14 rounded-full bg-danger-500" />
+          <h2 className="text-xl font-semibold text-brand-900">Antes de comenzar</h2>
           <ol className="mt-4 space-y-3 text-sm leading-relaxed text-ink-500">
             <li><span className="mr-2 font-semibold text-brand-600">1.</span>Selecciona el grupo o segmento al que perteneces.</li>
             <li><span className="mr-2 font-semibold text-brand-600">2.</span>Responde considerando únicamente conductas que hayas observado.</li>
             <li><span className="mr-2 font-semibold text-brand-600">3.</span>Utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
             <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de enviar la evaluación.</li>
           </ol>
-          <div className="mt-5 flex items-start gap-2.5 rounded-[12px] bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-700"><ShieldCheck size={20} weight="fill" className="mt-px shrink-0" />La encuesta no solicita nombre ni DNI. Las respuestas se registran de forma anónima y se presentan de manera consolidada.</div>
+          <div className="mt-5 flex items-start gap-2.5 rounded-[14px] border border-brand-100 bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-800"><ShieldCheck size={22} weight="fill" className="mt-px shrink-0 text-brand-600" />La encuesta no solicita nombre ni DNI. Las respuestas se registran de forma anónima y se presentan de manera consolidada.</div>
         </section>
 
-        <section className="rounded-[18px] border border-line bg-surface p-6">
-          <h2 className="text-xl font-semibold text-ink-900">Competencias evaluadas</h2>
+        <section className="rounded-[20px] border border-brand-100 bg-surface p-6 shadow-[0_12px_35px_rgba(13,47,100,0.08)]">
+          <div className="mb-5 h-1.5 w-14 rounded-full bg-brand-600" />
+          <h2 className="text-xl font-semibold text-brand-900">Competencias evaluadas</h2>
           <p className="mt-2 text-sm leading-relaxed text-ink-500">Se medirán cinco competencias mediante comportamientos observables:</p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {competencies.map(([name, description]) => (
-              <div key={name} className="rounded-[12px] border border-line p-4">
-                <p className="text-sm font-semibold text-ink-900">{name}</p>
-                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">{description}</p>
+            {competencies.map((competency, index) => (
+              <div key={competency.name} className={`rounded-[14px] border p-4 ${competency.tone}`}>
+                <div className="mb-2 flex h-7 w-7 items-center justify-center rounded-full bg-white text-[12px] font-bold text-brand-700 shadow-sm">{index + 1}</div>
+                <p className="text-sm font-semibold text-ink-900">{competency.name}</p>
+                <p className="mt-1 text-[13px] leading-relaxed text-ink-500">{competency.description}</p>
               </div>
             ))}
           </div>
         </section>
       </div>
 
-      <div className="mt-6 flex justify-end">
+      <div className="mt-6 flex justify-end rounded-[16px] bg-brand-50 px-5 py-4">
         <Button variant="primary" onClick={onStart}>Comenzar evaluación <ArrowRight size={17} weight="bold" /></Button>
       </div>
     </div>
