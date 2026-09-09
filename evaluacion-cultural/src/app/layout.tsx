@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Evaluación cultural · Panel de evaluados",
+  title: "Evaluación de Liderazgo Comercial · Panel de evaluados",
   description:
-    "Plataforma de evaluación cultural: índice cultural por evaluado y dimensión, evolución por periodo, brechas contra la meta y detalle por persona.",
+    "Plataforma de Evaluación de Liderazgo Comercial: resultados por evaluado y competencia, brechas contra la meta y detalle por persona.",
 };
 
 export default function RootLayout({
