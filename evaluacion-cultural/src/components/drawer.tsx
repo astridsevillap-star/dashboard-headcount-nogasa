@@ -14,6 +14,7 @@ import {
   participacionDe,
   pctOf,
   preguntasDe,
+  valoracionGeneralDe,
 } from "@/lib/data";
 import type { Resultados } from "@/lib/backend";
 import type { Persona } from "@/lib/types";
@@ -47,6 +48,7 @@ export function EvaluadoDrawer({
   const indice = indiceDe(results, evaluado);
   const cs = competenciaScoresDe(results, evaluado);
   const part = participacionDe(results, evaluado);
+  const valoracion = valoracionGeneralDe(results, evaluado);
   const qs = preguntasDe(evaluado);
   const cobertura = part.esperados ? (part.respondientes / part.esperados) * 100 : 0;
 
@@ -66,10 +68,11 @@ export function EvaluadoDrawer({
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-px border-b border-line bg-line">
+        <div className="grid grid-cols-2 gap-px border-b border-line bg-line sm:grid-cols-4">
           <Stat label="Índice de liderazgo" value={score(indice)} />
           <Stat label={`Brecha vs ${score(meta)}`} value={indice === null ? "–" : signedScore(indice - meta)} tone={toneText(indice === null ? null : indice - meta)} />
           <Stat label="Participación" value={part.esperados ? pct(cobertura) : "–"} hint={`${part.respondientes}/${part.esperados}`} />
+          <Stat label="Valoración general" value={valoracion.score === null ? "–" : `${score(valoracion.score)} / 10`} hint={`${valoracion.n} respuesta${valoracion.n === 1 ? "" : "s"}`} />
         </div>
 
         <div className="flex-1 overflow-y-auto px-5 py-4">

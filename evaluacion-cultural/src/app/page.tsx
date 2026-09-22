@@ -23,6 +23,7 @@ import {
   ranking,
   regiones as regionesOf,
   toneFor,
+  valoracionGeneralConsolidada,
 } from "@/lib/data";
 import { fetchResultados, getAdminKey, clearAdminKey, type Resultados } from "@/lib/backend";
 import { EDICION } from "@/lib/seed";
@@ -80,6 +81,7 @@ export default function DashboardPage() {
   const comp = consolidado(results, set);
   const rank = ranking(results, set);
   const matrix = buildMatrix(results, set);
+  const valoracionGeneral = valoracionGeneralConsolidada(results, set);
 
   const conDatos = comp.filter((c) => c.score > 0);
   const alta = [...conDatos].sort((a, b) => b.score - a.score)[0];
@@ -126,7 +128,7 @@ export default function DashboardPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
         <KpiCard label="Índice de liderazgo" value={score(indice)} hint={`Escala 1–5 · meta ${score(meta)}`}
           tone={brecha === null ? "neutral" : brecha >= 0 ? "ok" : brecha >= -0.5 ? "warn" : "bad"} />
         <KpiCard label="Brecha vs meta" value={brecha === null ? "–" : signedScore(brecha)} hint={`Objetivo general ${score(meta)}`}
@@ -134,6 +136,7 @@ export default function DashboardPage() {
         <KpiCard label="Participación" value={part.esperados ? pct(cobertura) : "–"} hint={`${part.respondientes} de ${part.esperados} respuestas`} />
         <KpiCard label="Competencia más baja" value={baja ? score(baja.score) : "–"} hint={baja ? baja.nombre : "Sin datos"}
           tone={baja ? (baja.score >= meta ? "ok" : baja.score >= meta - 0.5 ? "warn" : "bad") : "neutral"} />
+        <KpiCard label="Valoración general" value={valoracionGeneral === null ? "–" : `${score(valoracionGeneral)} / 10`} hint="Pregunta 12 · escala 1–10" />
       </div>
 
       <div className="grid gap-5 lg:grid-cols-5">

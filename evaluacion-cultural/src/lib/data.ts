@@ -79,7 +79,7 @@ export async function loadOrg(): Promise<Persona[]> {
   if (storedQuestions.length) {
     preguntas = storedQuestions
       .sort((a, b) => a.orden - b.orden)
-      .map((q) => ({ id: q.id, competenciaId: q.competencia_id, audiencia: "gerencial", texto: q.texto, activa: q.activa }));
+      .map((q) => ({ id: q.id, competenciaId: q.competencia_id, audiencia: "gerencial", texto: q.texto, activa: q.activa, escalaMax: q.escala_max === 10 ? 10 : 5 }));
   }
   return personas;
 }
@@ -263,7 +263,7 @@ export function pctOf(dist: number[]): number | null {
   return avg === null ? null : Math.round((avg / 5) * 100);
 }
 export function distDe(r: Resultados, evaluadoId: string, preguntaId: string): number[] {
-  return r.res.get(`${evaluadoId}|${preguntaId}`) ?? [0, 0, 0, 0, 0];
+  return r.res.get(`${evaluadoId}|${preguntaId}`) ?? [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 }
 
 const round1 = (v: number) => Math.round(v * 10) / 10;
@@ -299,6 +299,29 @@ export function indiceDe(r: Resultados, evaluado: Persona): number | null {
   const cs = competenciaScoresDe(r, evaluado).filter((c) => c.score > 0);
   if (cs.length === 0) return null;
   return round1(cs.reduce((a, c) => a + c.score, 0) / cs.length);
+}
+
+export function valoracionGeneralDe(r: Resultados, evaluado: Persona): { score: number | null; n: number } {
+  const q = preguntasDe(evaluado).find((item) => item.competenciaId === "valoracion_general");
+  if (!q) return { score: null, n: 0 };
+  const dist = distDe(r, evaluado.id, q.id).slice(0, 10);
+  const avg = avgOf(dist);
+  return { score: avg === null ? null : round1(avg), n: nOf(dist) };
+}
+
+export function valoracionGeneralConsolidada(r: Resultados, set: Persona[]): number | null {
+  let total = 0;
+  let count = 0;
+  for (const evaluado of set) {
+    const q = preguntasDe(evaluado).find((item) => item.competenciaId === "valoracion_general");
+    if (!q) continue;
+    const dist = distDe(r, evaluado.id, q.id).slice(0, 10);
+    for (let index = 0; index < dist.length; index++) {
+      total += (index + 1) * dist[index];
+      count += dist[index];
+    }
+  }
+  return count ? round1(total / count) : null;
 }
 
 export function participacionDe(r: Resultados, evaluado: Persona): { respondientes: number; esperados: number } {

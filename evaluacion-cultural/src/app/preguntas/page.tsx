@@ -8,7 +8,7 @@ import { clearAdminKey, getAdminKey, replaceQuestions, type PreguntaConfig } fro
 import { competencias, loadOrg, preguntas } from "@/lib/data";
 import { PREGUNTAS } from "@/lib/seed";
 
-const defaults = () => PREGUNTAS.filter((item) => item.audiencia === "gerencial").map((item, index) => ({ id: item.id, competencia_id: item.competenciaId, texto: item.texto, activa: item.activa, orden: index + 1 }));
+const defaults = () => PREGUNTAS.filter((item) => item.audiencia === "gerencial").map((item, index) => ({ id: item.id, competencia_id: item.competenciaId, texto: item.texto, activa: item.activa, orden: index + 1, escala_max: item.escalaMax }));
 
 export default function PreguntasPage() {
   const router = useRouter();
@@ -21,7 +21,7 @@ export default function PreguntasPage() {
   useEffect(() => {
     if (!adminKey) { router.replace("/login"); return; }
     loadOrg().then(() => {
-      setItems(preguntas.map((item, index) => ({ id: item.id, competencia_id: item.competenciaId, texto: item.texto, activa: item.activa, orden: index + 1 })));
+      setItems(preguntas.map((item, index) => ({ id: item.id, competencia_id: item.competenciaId, texto: item.texto, activa: item.activa, orden: index + 1, escala_max: item.escalaMax })));
       setReady(true);
     }).catch((error) => {
       if (String(error.message).includes("unauthorized")) { clearAdminKey(); router.replace("/login"); }
@@ -52,7 +52,7 @@ export default function PreguntasPage() {
   return (
     <div className="fade-rise flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-[22px] font-semibold text-ink-900">Afirmaciones del pulso</h1><p className="mt-1 max-w-2xl text-sm text-ink-500">Contenido único de 20 afirmaciones para todos los líderes. Puedes editar el texto, cambiar la competencia o desactivar afirmaciones.</p></div>
+        <div><h1 className="text-[22px] font-semibold text-ink-900">Afirmaciones del pulso</h1><p className="mt-1 max-w-2xl text-sm text-ink-500">Contenido único de 12 preguntas para todos los líderes. Las preguntas 1 a 11 usan escala 1–5 y la pregunta 12 usa escala 1–10.</p></div>
         <div className="flex gap-2"><Button variant="secondary" onClick={() => setItems(defaults())}><ArrowCounterClockwise size={15} /> Restaurar texto original</Button><Button variant="primary" onClick={save} disabled={saving}><FloppyDisk size={15} /> {saving ? "Guardando…" : "Guardar cambios"}</Button></div>
       </div>
       <div className="flex flex-col gap-3">
@@ -60,7 +60,8 @@ export default function PreguntasPage() {
           <section key={item.id} className={`rounded-[12px] border bg-surface p-4 ${item.activa ? "border-line" : "border-line bg-line-soft/40 opacity-75"}`}>
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-50 font-mono text-[13px] font-semibold text-brand-700">{index + 1}</span>
-              <Select value={item.competencia_id} onChange={(event) => update(index, { competencia_id: event.target.value })}>{competencias.map((competency) => <option key={competency.id} value={competency.id}>{competency.nombre}</option>)}</Select>
+              <Select value={item.competencia_id} onChange={(event) => update(index, { competencia_id: event.target.value, escala_max: event.target.value === "valoracion_general" ? 10 : 5 })}>{competencias.map((competency) => <option key={competency.id} value={competency.id}>{competency.nombre}</option>)}<option value="valoracion_general">Valoración general</option></Select>
+              <span className="rounded-full bg-brand-50 px-2.5 py-1 text-[11px] font-semibold text-brand-700">Escala 1–{item.escala_max}</span>
               <label className="ml-auto flex cursor-pointer items-center gap-2 text-[13px] font-medium text-ink-600"><input type="checkbox" checked={item.activa} onChange={(event) => update(index, { activa: event.target.checked })} className="h-4 w-4 accent-brand-600" />{item.activa ? <><Check size={14} /> Activa</> : "Inactiva"}</label>
             </div>
             <textarea value={item.texto} onChange={(event) => update(index, { texto: event.target.value })} rows={2} className="mt-3 w-full resize-y rounded-[9px] border border-line bg-surface px-3 py-2.5 text-sm leading-relaxed text-ink-900 outline-none hover:border-ink-300 focus:border-brand-600" />

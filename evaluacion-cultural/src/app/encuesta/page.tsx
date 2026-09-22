@@ -5,7 +5,7 @@ import { ArrowRight, CheckCircle, ShieldCheck, UsersThree } from "@phosphor-icon
 import { Button, Skeleton, useToasts, ToastStack } from "@/components/ui";
 import { competencias, evaluadosDeGrupo, evaluadosDeSegmentoLider, GRUPOS_ENCUESTA, loadOrg, personas, preguntasActivas, SEGMENTOS_LIDERES, type GrupoEncuesta, type SegmentoLider } from "@/lib/data";
 import { submitEncuesta, yaCompleto } from "@/lib/backend";
-import { ESCALA, EDICION } from "@/lib/seed";
+import { ESCALA, ESCALA_VALORACION, EDICION } from "@/lib/seed";
 import type { Pregunta } from "@/lib/types";
 
 function isGroup(value: string | null): value is GrupoEncuesta {
@@ -100,8 +100,9 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
           <ol className="mt-4 space-y-3 text-sm leading-relaxed text-ink-500">
             <li><span className="mr-2 font-semibold text-brand-600">1.</span>Selecciona el grupo o segmento al que perteneces.</li>
             <li><span className="mr-2 font-semibold text-brand-600">2.</span>Responde considerando únicamente conductas que hayas observado.</li>
-            <li><span className="mr-2 font-semibold text-brand-600">3.</span>Utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
-            <li><span className="mr-2 font-semibold text-brand-600">4.</span>Completa las 20 afirmaciones antes de finalizar.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">3.</span>En las preguntas 1 a 11 utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">4.</span>La pregunta 12 corresponde a una valoración general y se responde en una escala del 1 al 10.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">5.</span>Completa las 12 preguntas antes de finalizar.</li>
           </ol>
           <div className="mt-5 flex items-start gap-2.5 rounded-[14px] border border-brand-100 bg-brand-50 p-4 text-[13px] leading-relaxed text-brand-800"><ShieldCheck size={22} weight="fill" className="mt-px shrink-0 text-brand-600" />Esta herramienta no solicita datos de identificación personal; por ello, las respuestas se mantienen anónimas.</div>
         </section>
@@ -205,6 +206,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
   if (status === "hecho") return <Centered title="¡Gracias por participar!" icon onExit={onExit} secondaryLabel="Registrar otra participación de este grupo" onSecondary={onRestart}>Tus respuestas fueron registradas de forma anónima.</Centered>;
 
   const question = questions[questionIndex];
+  const responseScale = question.escalaMax === 10 ? ESCALA_VALORACION : ESCALA;
   const setCell = (evaluatedId: string, value: number) => setAnswers((previous) => ({ ...previous, [question.id]: { ...previous[question.id], [evaluatedId]: value } }));
   const questionComplete = (questionId: string) => evaluated.every((person) => answers[questionId]?.[person.id] !== undefined);
   const allReady = questions.every((item) => questionComplete(item.id));
@@ -227,7 +229,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
     }
   }
 
-  const competency = competencias.find((item) => item.id === question.competenciaId)?.nombre ?? "";
+  const competency = competencias.find((item) => item.id === question.competenciaId)?.nombre ?? (question.competenciaId === "valoracion_general" ? "Valoración general" : "");
   return (
     <div className="fade-rise mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-100 bg-brand-50 px-4 py-3">
@@ -246,8 +248,8 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
           return (
             <div key={person.id} className={`rounded-[16px] border bg-surface p-4 shadow-[0_6px_20px_rgba(13,47,100,0.05)] transition-colors ${value !== undefined ? "border-ok-100" : "border-brand-100"}`}>
               <div className="mb-3 flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-gradient-to-br from-brand-700 to-brand-900 text-[13px] font-bold text-white shadow-sm">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div><div><p className="text-sm font-semibold text-ink-900">{person.nombre}</p><p className="text-[12px] text-ink-500">{person.cargo}</p></div><span className={`ml-auto rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span></div>
-              <div className="grid grid-cols-2 gap-2 md:grid-cols-6">
-                {ESCALA.map((option) => <button key={option.value} onClick={() => setCell(person.id, option.value)} className={`rounded-[10px] border px-2 py-2.5 text-[12px] leading-tight transition-colors ${value === option.value ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"}`}><span className="tnum mr-1 font-mono font-semibold">{option.value}</span>{option.label}</button>)}
+              <div className={`grid gap-2 ${question.escalaMax === 10 ? "grid-cols-5 md:grid-cols-10" : "grid-cols-2 md:grid-cols-6"}`}>
+                {responseScale.map((option) => <button key={option.value} onClick={() => setCell(person.id, option.value)} className={`rounded-[10px] border px-2 py-2.5 text-[12px] leading-tight transition-colors ${value === option.value ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"}`}><span className="tnum font-mono font-semibold">{option.value}</span>{option.label ? <span className="ml-1">{option.label}</span> : null}</button>)}
               </div>
             </div>
           );

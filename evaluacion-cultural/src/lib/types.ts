@@ -35,6 +35,8 @@ export type Pregunta = {
   audiencia: Audiencia;
   texto: string;
   activa: boolean;
+  /** Escala numérica principal de la pregunta. */
+  escalaMax: 5 | 10;
 };
 
 /** Meta (objetivo) de puntaje por competencia. Escala 1–5. */
@@ -45,14 +47,14 @@ export type Meta = {
 
 /**
  * Resultado agregado y anónimo por evaluado y pregunta: distribución de
- * frecuencias en la escala 1–5. `dist[k]` = nº de evaluadores que marcaron k+1.
+ * frecuencias en la escala 1–10. `dist[k]` = nº de evaluadores que marcaron k+1.
  * Las respuestas "No tengo suficiente información" no se registran (no cuentan).
  * Promedio = Σ((k+1)·dist[k]) / Σdist. Resultado % = promedio / 5 · 100.
  */
 export type Resultado = {
   evaluadoId: string;
   preguntaId: string;
-  dist: [number, number, number, number, number];
+  dist: [number, number, number, number, number, number, number, number, number, number];
 };
 
 /** Administrador autorizado. */

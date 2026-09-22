@@ -9,7 +9,7 @@ import { supabase } from "./supabase";
 --------------------------------------------------------------------------- */
 
 export type Resultados = {
-  /** clave `${evaluadoId}|${preguntaId}` → distribución [d1..d5] */
+  /** clave `${evaluadoId}|${preguntaId}` → distribución [d1..d10] */
   res: Map<string, number[]>;
   /** evaluadoId → nº de respondientes */
   part: Map<string, number>;
@@ -43,7 +43,7 @@ export async function checkAdminKey(key: string): Promise<boolean> {
   return Boolean(data);
 }
 
-type RawResultado = { evaluado_id: string; pregunta_id: string; d1: number; d2: number; d3: number; d4: number; d5: number };
+type RawResultado = { evaluado_id: string; pregunta_id: string; d1: number; d2: number; d3: number; d4: number; d5: number; d6: number; d7: number; d8: number; d9: number; d10: number };
 type RawPart = { evaluado_id: string; respondientes: number };
 
 /** Lee los resultados agregados con la clave de administrador. */
@@ -53,7 +53,7 @@ export async function fetchResultados(key: string): Promise<Resultados> {
   const payload = data as { resultados: RawResultado[]; participacion: RawPart[]; completions: number };
   const res = new Map<string, number[]>();
   for (const r of payload.resultados ?? []) {
-    res.set(`${r.evaluado_id}|${r.pregunta_id}`, [r.d1, r.d2, r.d3, r.d4, r.d5]);
+    res.set(`${r.evaluado_id}|${r.pregunta_id}`, [r.d1, r.d2, r.d3, r.d4, r.d5, r.d6 ?? 0, r.d7 ?? 0, r.d8 ?? 0, r.d9 ?? 0, r.d10 ?? 0]);
   }
   const part = new Map<string, number>();
   for (const p of payload.participacion ?? []) part.set(p.evaluado_id, p.respondientes);
@@ -76,6 +76,7 @@ export type PreguntaConfig = {
   texto: string;
   activa: boolean;
   orden: number;
+  escala_max: 5 | 10;
 };
 
 export async function fetchOrg(): Promise<{ overrides: Override[]; extra: PersonaExtra[]; assignments: AssignmentOverride[] }> {
