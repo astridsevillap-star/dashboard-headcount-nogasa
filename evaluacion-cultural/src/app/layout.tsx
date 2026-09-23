@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pulso de Liderazgo Comercial · Panel de resultados",
+  title: "Liderazgo Comercial 2026 · Panel de resultados",
   description:
-    "Plataforma del Pulso de Liderazgo Comercial: resultados por líder y competencia, brechas contra la meta y detalle por persona.",
+    "Plataforma de Liderazgo Comercial 2026: resultados por líder y competencia, brechas contra la meta y detalle por persona.",
 };
 
 export default function RootLayout({

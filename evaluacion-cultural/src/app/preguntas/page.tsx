@@ -52,7 +52,7 @@ export default function PreguntasPage() {
   return (
     <div className="fade-rise flex flex-col gap-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div><h1 className="text-[22px] font-semibold text-ink-900">Afirmaciones del pulso</h1><p className="mt-1 max-w-2xl text-sm text-ink-500">Contenido único de 12 preguntas para todos los líderes. Las preguntas 1 a 11 usan escala 1–5 y la pregunta 12 usa escala 1–10.</p></div>
+        <div><h1 className="text-[22px] font-semibold text-ink-900">Preguntas de liderazgo</h1><p className="mt-1 max-w-2xl text-sm text-ink-500">Contenido único de 12 preguntas para todos los líderes. Las preguntas 1 a 11 usan escala 1–5 y la pregunta 12 usa escala 1–10.</p></div>
         <div className="flex gap-2"><Button variant="secondary" onClick={() => setItems(defaults())}><ArrowCounterClockwise size={15} /> Restaurar texto original</Button><Button variant="primary" onClick={save} disabled={saving}><FloppyDisk size={15} /> {saving ? "Guardando…" : "Guardar cambios"}</Button></div>
       </div>
       <div className="flex flex-col gap-3">

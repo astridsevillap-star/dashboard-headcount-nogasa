@@ -53,7 +53,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {!enEncuesta && (
             <div className="ml-auto flex items-center gap-4">
               <Link href="/encuesta" className="text-sm font-medium text-ink-500 hover:text-ink-900">
-                Ir al pulso
+                Ir a la encuesta
               </Link>
               {admin ? (
                 <button
