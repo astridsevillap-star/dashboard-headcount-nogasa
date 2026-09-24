@@ -119,10 +119,10 @@ export function esEvaluado(p: Persona): boolean {
 export type GrupoEncuesta = "detalle" | "lpc" | "home-care" | "supermercados" | "provincias";
 export type SegmentoLider = "norte" | "sur" | "oriente" | "regionales" | "lima" | "lpc";
 export const GRUPOS_ENCUESTA: { id: GrupoEncuesta; label: string; area: string }[] = [
-  { id: "detalle", label: "Detalle", area: "VENTAS DETALLE" },
-  { id: "lpc", label: "LPC", area: "VENTAS LPC" },
-  { id: "home-care", label: "Home Care", area: "HOME CARE" },
-  { id: "supermercados", label: "Supermercados", area: "SUPERMERCADO" },
+  { id: "detalle", label: "Detalle Lima", area: "VENTAS DETALLE" },
+  { id: "lpc", label: "LPC Lima", area: "VENTAS LPC" },
+  { id: "home-care", label: "Home Care Lima", area: "HOME CARE" },
+  { id: "supermercados", label: "Supermercados Lima", area: "SUPERMERCADO" },
   { id: "provincias", label: "Líderes de equipo", area: "PROVINCIAS" },
 ];
 
