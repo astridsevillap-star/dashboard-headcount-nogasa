@@ -137,10 +137,10 @@ export default function OrganizacionPage() {
 }
 
 const ACCESS_GROUPS = [
-  { label: "Detalle", links: [{ label: "Acceso directo", path: "/encuesta?grupo=detalle" }] },
-  { label: "LPC", links: [{ label: "Acceso directo", path: "/encuesta?grupo=lpc" }] },
-  { label: "Home Care", links: [{ label: "Acceso directo", path: "/encuesta?grupo=home-care" }] },
-  { label: "Supermercados", links: [{ label: "Acceso directo", path: "/encuesta?grupo=supermercados" }] },
+  { label: "Detalle Lima", links: [{ label: "Acceso directo", path: "/encuesta?grupo=detalle" }] },
+  { label: "LPC Lima", links: [{ label: "Acceso directo", path: "/encuesta?grupo=lpc" }] },
+  { label: "Home Care Lima", links: [{ label: "Acceso directo", path: "/encuesta?grupo=home-care" }] },
+  { label: "Supermercados Lima", links: [{ label: "Acceso directo", path: "/encuesta?grupo=supermercados" }] },
   {
     label: "Líderes de equipo",
     links: [
