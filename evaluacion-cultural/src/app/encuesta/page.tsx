@@ -202,9 +202,37 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
           const value = answers[question.id]?.[person.id];
           return (
             <div key={person.id} className={`rounded-[16px] border bg-surface p-4 shadow-[0_6px_20px_rgba(13,47,100,0.05)] transition-colors ${value !== undefined ? "border-ok-100" : "border-brand-100"}`}>
-              <div className="mb-3 flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-[12px] bg-gradient-to-br from-brand-700 to-brand-900 text-[13px] font-bold text-white shadow-sm">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div><div><p className="text-sm font-semibold text-ink-900">{person.nombre}</p><p className="text-[12px] text-ink-500">{person.cargo}</p></div><span className={`ml-auto rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span></div>
-              <div className={`grid gap-2 ${question.escalaMax === 10 ? "grid-cols-5 md:grid-cols-10" : "grid-cols-2 md:grid-cols-6"}`}>
-                {responseScale.map((option) => <button key={option.value} onClick={() => setCell(person.id, option.value)} className={`rounded-[10px] border px-2 py-2.5 text-[12px] leading-tight transition-colors ${value === option.value ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-ink-300 hover:text-ink-900"}`}><span className="tnum font-mono font-semibold">{option.value}</span>{option.label ? <span className="ml-1">{option.label}</span> : null}</button>)}
+              <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] lg:items-stretch">
+                <div className="flex items-center gap-3 border-b border-line-soft pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br from-brand-700 to-brand-900 text-[13px] font-bold text-white shadow-sm">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold leading-snug text-ink-900">{person.nombre}</p>
+                    <p className="mt-0.5 text-[12px] leading-snug text-ink-500">{person.cargo}</p>
+                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span>
+                  </div>
+                </div>
+                <div role="radiogroup" aria-label={`Escala de respuesta para ${person.nombre}`} className={`grid gap-2 ${question.escalaMax === 10 ? "grid-cols-5 xl:grid-cols-10" : "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"}`}>
+                  {responseScale.map((option) => {
+                    const selected = value === option.value;
+                    return (
+                      <label key={option.value} className={`flex cursor-pointer flex-col items-center justify-between rounded-[10px] border px-2 py-2.5 text-center text-[12px] leading-tight transition-colors ${question.escalaMax === 10 ? "min-h-[74px]" : "min-h-[96px]"} ${selected ? "border-brand-600 bg-brand-50 font-medium text-brand-700" : "border-line text-ink-500 hover:border-brand-300 hover:text-ink-900"}`}>
+                        <span>
+                          <span className="tnum block font-mono text-[14px] font-bold text-ink-900">{option.value}</span>
+                          {option.label ? <span className="mt-1 block">{option.label}</span> : null}
+                        </span>
+                        <input
+                          type="radio"
+                          name={`respuesta-${question.id}-${person.id}`}
+                          value={option.value}
+                          checked={selected}
+                          onChange={() => setCell(person.id, option.value)}
+                          aria-label={`${option.value}${option.label ? `. ${option.label}` : ""}`}
+                          className="mt-2 h-5 w-5 shrink-0 cursor-pointer accent-brand-600"
+                        />
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
             </div>
           );
