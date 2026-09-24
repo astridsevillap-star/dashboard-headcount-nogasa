@@ -203,13 +203,10 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
           return (
             <div key={person.id} className={`rounded-[16px] border bg-surface p-4 shadow-[0_6px_20px_rgba(13,47,100,0.05)] transition-colors ${value !== undefined ? "border-ok-100" : "border-brand-100"}`}>
               <div className="grid gap-4 lg:grid-cols-[190px_minmax(0,1fr)] lg:items-stretch">
-                <div className="flex items-center gap-3 border-b border-line-soft pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[12px] bg-gradient-to-br from-brand-700 to-brand-900 text-[13px] font-bold text-white shadow-sm">{person.nombre.split(" ").slice(0, 2).map((word) => word[0]).join("").toUpperCase()}</div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold leading-snug text-ink-900">{person.nombre}</p>
-                    <p className="mt-0.5 text-[12px] leading-snug text-ink-500">{person.cargo}</p>
-                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span>
-                  </div>
+                <div className="flex min-w-0 flex-col justify-center border-b border-line-soft pb-3 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
+                  <p className="text-sm font-semibold leading-snug text-ink-900">{person.nombre}</p>
+                  <p className="mt-0.5 text-[12px] leading-snug text-ink-500">{person.cargo}</p>
+                  <span className={`mt-2 inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide ${value !== undefined ? "bg-ok-50 text-ok-600" : "bg-brand-50 text-brand-600"}`}>{value !== undefined ? "Respondida" : "Pendiente"}</span>
                 </div>
                 <div role="radiogroup" aria-label={`Escala de respuesta para ${person.nombre}`} className={`grid gap-2 ${question.escalaMax === 10 ? "grid-cols-5 xl:grid-cols-10" : "grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"}`}>
                   {responseScale.map((option) => {
