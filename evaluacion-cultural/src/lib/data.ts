@@ -127,12 +127,13 @@ export const GRUPOS_ENCUESTA: { id: GrupoEncuesta; label: string; area: string }
 ];
 
 export const SEGMENTOS_LIDERES: { id: SegmentoLider; label: string; descripcion: string }[] = [
-  { id: "norte", label: "Jefes de ventas Norte", descripcion: "Evalúan al Jefe Regional Norte y a Ricardo Velásquez" },
-  { id: "sur", label: "Jefes de ventas Sur", descripcion: "Evalúan al Jefe Regional Sur y a Ricardo Velásquez" },
-  { id: "oriente", label: "Jefes de ventas Oriente", descripcion: "Evalúan al Jefe Regional Oriente y a Ricardo Velásquez" },
+  { id: "norte", label: "Líderes de provincias Norte", descripcion: "Evalúan al Jefe Regional Norte y a Ricardo Velásquez" },
+  { id: "sur", label: "Líderes de provincias Sur", descripcion: "Evalúan al Jefe Regional Sur y a Ricardo Velásquez" },
+  { id: "oriente", label: "Líderes de provincias Oriente", descripcion: "Evalúan al Jefe Regional Oriente y a Ricardo Velásquez" },
   { id: "regionales", label: "Jefes regionales", descripcion: "Evalúan a Ricardo Velásquez" },
-  { id: "lima", label: "Jefes de Lima Detalle", descripcion: "Evalúan a Carlos Acosta y a Ricardo Velásquez" },
-  { id: "lpc", label: "Jefes de LPC", descripcion: "Evalúan a Héctor Perdomo y a Ricardo Velásquez" },
+  { id: "lima", label: "Líderes de Lima", descripcion: "Evalúan a todos los líderes de Lima y a Ricardo Velásquez" },
+  // Se conserva para que los enlaces LPC anteriores dirijan al nuevo grupo unificado de Lima.
+  { id: "lpc", label: "Líderes de Lima", descripcion: "Evalúan a todos los líderes de Lima y a Ricardo Velásquez" },
 ];
 
 export function grupoDeArea(area: string): GrupoEncuesta | null {
@@ -169,11 +170,14 @@ export function evaluadosDeSegmentoLider(all: Persona[], segmento: SegmentoLider
   if (segmento === "regionales") return gerente;
 
   if (segmento === "lima" || segmento === "lpc") {
-    const area = segmento === "lima" ? "VENTAS DETALLE" : "VENTAS LPC";
-    const jefeLima = all.filter(
-      (p) => p.area === area && p.nivel === 2 && p.region === "LIMA"
+    const lideresLima = all.filter(
+      (p) =>
+        p.area !== DEMO_AREA &&
+        p.region === "LIMA" &&
+        p.nivel > 1 &&
+        EVALUAR_NIVELES.includes(p.nivel)
     );
-    return [...gerente, ...jefeLima]
+    return [...gerente, ...lideresLima]
       .sort((a, b) => a.nivel - b.nivel || a.nombre.localeCompare(b.nombre, "es"));
   }
 
@@ -191,8 +195,41 @@ export function evaluadoresBaseDe(all: Persona[], evaluado: Persona): Persona[] 
   if (evaluado.nivel === 1) {
     return all.filter((p) => p.nivel > 1 && p.area !== DEMO_AREA && grupoDePersona(p));
   }
+
+  // En provincias, los líderes N3 evalúan únicamente al jefe N2 de su región.
+  if (evaluado.area === "VENTAS DETALLE" && evaluado.nivel === 2 && evaluado.region !== "LIMA") {
+    return all.filter(
+      (p) =>
+        p.id !== evaluado.id &&
+        p.area === "VENTAS DETALLE" &&
+        p.nivel === 3 &&
+        p.region === evaluado.region
+    );
+  }
+
+  // Los jefes N3 de provincias actúan como evaluadores, pero no forman parte
+  // de la lista de evaluados de los accesos regionales.
+  if (evaluado.area === "VENTAS DETALLE" && evaluado.nivel === 3 && evaluado.region !== "LIMA") {
+    return [];
+  }
+
   if (!grupo) return [];
-  return all.filter((p) => p.id !== evaluado.id && p.nivel > 1 && grupoDePersona(p) === grupo);
+  const ids = new Set(
+    all
+      .filter((p) => p.id !== evaluado.id && p.nivel > 1 && grupoDePersona(p) === grupo)
+      .map((p) => p.id)
+  );
+
+  // Además de su grupo comercial, todos los líderes de Lima se evalúan entre sí.
+  if (evaluado.region === "LIMA" && evaluado.nivel <= 3) {
+    for (const p of all) {
+      if (p.id !== evaluado.id && p.area !== DEMO_AREA && p.region === "LIMA" && p.nivel > 1 && p.nivel <= 3) {
+        ids.add(p.id);
+      }
+    }
+  }
+
+  return all.filter((p) => ids.has(p.id));
 }
 
 /** Evaluadores efectivos: regla base más altas/bajas manuales guardadas. */

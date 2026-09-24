@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowCounterClockwise, Plus, Trash, Users } from "@phosphor-icons/react";
+import { ArrowCounterClockwise, Copy, Plus, Trash, Users } from "@phosphor-icons/react";
 import { Button, Select, Skeleton, TextInput, useToasts, ToastStack } from "@/components/ui";
 import { areas as areasOf, evaluadoresBaseDe, evaluadoresDe, evaluados, evaluadosDe, extraIds, loadOrg, NIVEL_LABEL, personas, regiones as regionesOf } from "@/lib/data";
 import { clearAdminKey, clearOverride, deleteExtra, getAdminKey, replaceAssignmentOverrides, setOverride, upsertExtra } from "@/lib/backend";
@@ -102,6 +102,8 @@ export default function OrganizacionPage() {
         <TextInput value={q} onChange={(e) => setQ(e.target.value)} placeholder="Buscar por nombre, cargo, área o región…" className="w-72" />
       </div>
 
+      <AccessLinks push={push} />
+
       <section className="overflow-x-auto rounded-[12px] border border-line bg-surface">
         <table className="w-full border-separate border-spacing-0 text-[13px]">
           <thead>
@@ -131,6 +133,55 @@ export default function OrganizacionPage() {
 
       <ToastStack toasts={toasts} dismiss={dismiss} />
     </div>
+  );
+}
+
+const ACCESS_GROUPS = [
+  { label: "Detalle", links: [{ label: "Acceso directo", path: "/encuesta?grupo=detalle" }] },
+  { label: "LPC", links: [{ label: "Acceso directo", path: "/encuesta?grupo=lpc" }] },
+  { label: "Home Care", links: [{ label: "Acceso directo", path: "/encuesta?grupo=home-care" }] },
+  { label: "Supermercados", links: [{ label: "Acceso directo", path: "/encuesta?grupo=supermercados" }] },
+  {
+    label: "Líderes de equipo",
+    links: [
+      { label: "Lima", path: "/encuesta?grupo=provincias&segmento=lima" },
+      { label: "Norte", path: "/encuesta?grupo=provincias&segmento=norte" },
+      { label: "Sur", path: "/encuesta?grupo=provincias&segmento=sur" },
+      { label: "Oriente", path: "/encuesta?grupo=provincias&segmento=oriente" },
+      { label: "Jefes regionales", path: "/encuesta?grupo=provincias&segmento=regionales" },
+    ],
+  },
+];
+
+function AccessLinks({ push }: { push: (k: "ok" | "error", t: string) => void }) {
+  async function copy(path: string, label: string) {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${path}`);
+      push("ok", `Enlace de ${label} copiado.`);
+    } catch {
+      push("error", "No se pudo copiar el enlace.");
+    }
+  }
+
+  return (
+    <section className="rounded-[14px] border border-brand-100 bg-brand-50/60 p-5">
+      <h2 className="text-[16px] font-semibold text-brand-900">Cinco accesos de Liderazgo Comercial</h2>
+      <p className="mt-1 text-[13px] leading-relaxed text-ink-500">Comparte el enlace directo correspondiente. Las personas ingresarán a su grupo o región sin realizar ninguna selección.</p>
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+        {ACCESS_GROUPS.map((group) => (
+          <div key={group.label} className="rounded-[12px] border border-brand-100 bg-surface p-3.5">
+            <p className="text-[13px] font-semibold text-ink-900">{group.label}</p>
+            <div className="mt-2 flex flex-col gap-1.5">
+              {group.links.map((link) => (
+                <button key={link.path} onClick={() => copy(link.path, `${group.label} · ${link.label}`)} className="flex items-center justify-between gap-2 rounded-[8px] border border-line-soft px-2.5 py-2 text-left text-[12px] text-brand-700 transition-colors hover:border-brand-300 hover:bg-brand-50">
+                  <span>{link.label}</span><Copy size={14} className="shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 

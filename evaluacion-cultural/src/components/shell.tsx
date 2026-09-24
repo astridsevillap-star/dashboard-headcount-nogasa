@@ -52,9 +52,11 @@ export function Shell({ children }: { children: React.ReactNode }) {
           {/* En la encuesta el encabezado es mínimo (solo el logo). */}
           {!enEncuesta && (
             <div className="ml-auto flex items-center gap-4">
-              <Link href="/encuesta" className="text-sm font-medium text-ink-500 hover:text-ink-900">
-                Ir a la encuesta
-              </Link>
+              {admin && (
+                <Link href="/organizacion" className="text-sm font-medium text-ink-500 hover:text-ink-900">
+                  Administrar accesos
+                </Link>
+              )}
               {admin ? (
                 <button
                   onClick={() => {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ArrowRight, CheckCircle, ShieldCheck, UsersThree } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, ShieldCheck } from "@phosphor-icons/react";
 import { Button, Skeleton, useToasts, ToastStack } from "@/components/ui";
 import { competencias, evaluadosDeGrupo, evaluadosDeSegmentoLider, GRUPOS_ENCUESTA, loadOrg, personas, preguntasActivas, SEGMENTOS_LIDERES, type GrupoEncuesta, type SegmentoLider } from "@/lib/data";
 import { submitEncuesta, yaCompleto } from "@/lib/backend";
@@ -41,38 +41,32 @@ export default function EncuestaPage() {
       const queryGroup = params.get("grupo");
       const querySegment = params.get("segmento");
       if (isGroup(queryGroup)) setGroup(queryGroup);
-      if (queryGroup !== "provincias" && isLeaderSegment(querySegment)) setLeaderSegment(querySegment);
-      if (isGroup(queryGroup) || params.get("inicio") === "1") setShowInstructions(false);
+      if (queryGroup === "provincias" && isLeaderSegment(querySegment)) {
+        // El enlace LPC anterior se integra al acceso unificado de líderes de Lima.
+        setLeaderSegment(querySegment === "lpc" ? "lima" : querySegment);
+      }
       setReady(true);
     });
   }, []);
 
   if (!ready) return <div className="mx-auto max-w-md pt-10"><Skeleton className="h-64 w-full" /></div>;
 
-  function enter(next: GrupoEncuesta) {
-    window.history.replaceState(null, "", `/encuesta?grupo=${next}`);
-    setGroup(next);
-  }
   function start() {
-    window.history.replaceState(null, "", "/encuesta?inicio=1");
     setShowInstructions(false);
   }
-  function enterLeaderSegment(next: SegmentoLider) {
-    window.history.replaceState(null, "", `/encuesta?grupo=provincias&segmento=${next}`);
-    setLeaderSegment(next);
-  }
   function exit() {
-    window.history.replaceState(null, "", "/encuesta");
-    setGroup(null);
-    setLeaderSegment(null);
+    setShowInstructions(true);
   }
 
-  if (showInstructions) return <InstructionsPage onStart={start} />;
-  if (!group) return <GroupGate onEnter={enter} />;
+  if (!group || (group === "provincias" && !leaderSegment)) return <InvalidAccess />;
+  const accessLabel = leaderSegment
+    ? SEGMENTOS_LIDERES.find((item) => item.id === leaderSegment)?.label ?? leaderSegment
+    : GRUPOS_ENCUESTA.find((item) => item.id === group)?.label ?? group;
+  if (showInstructions) return <InstructionsPage accessLabel={accessLabel} onStart={start} />;
   return <Survey key={`${group}-${leaderSegment ?? "general"}-${round}`} group={group} leaderSegment={leaderSegment} onExit={exit} onRestart={() => { participantId(group, leaderSegment, true); setRound((n) => n + 1); }} />;
 }
 
-function InstructionsPage({ onStart }: { onStart: () => void }) {
+function InstructionsPage({ accessLabel, onStart }: { accessLabel: string; onStart: () => void }) {
   const competencies = [
     { name: "Creatividad", description: "Generación de ideas, soluciones y mejora continua.", tone: "border-brand-200 bg-brand-50/70" },
     { name: "Autonomía", description: "Delegación, desarrollo y capacidad para asumir responsabilidades.", tone: "border-ok-100 bg-ok-50/70" },
@@ -98,7 +92,7 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
           <div className="mb-5 h-1.5 w-14 rounded-full bg-danger-500" />
           <h2 className="text-xl font-semibold text-brand-900">Antes de comenzar</h2>
           <ol className="mt-4 space-y-3 text-sm leading-relaxed text-ink-500">
-            <li><span className="mr-2 font-semibold text-brand-600">1.</span>Selecciona el grupo o segmento al que perteneces.</li>
+            <li><span className="mr-2 font-semibold text-brand-600">1.</span>Has ingresado mediante el acceso asignado a <strong>{accessLabel}</strong>; no necesitas seleccionar tu procedencia.</li>
             <li><span className="mr-2 font-semibold text-brand-600">2.</span>Responde considerando únicamente conductas que hayas observado.</li>
             <li><span className="mr-2 font-semibold text-brand-600">3.</span>En las preguntas 1 a 11 utiliza la escala del 1 al 5. Si no cuentas con información suficiente, selecciona la opción 6.</li>
             <li><span className="mr-2 font-semibold text-brand-600">4.</span>La pregunta 12 corresponde a una valoración general y se responde en una escala del 1 al 10.</li>
@@ -130,51 +124,12 @@ function InstructionsPage({ onStart }: { onStart: () => void }) {
   );
 }
 
-function GroupGate({ onEnter }: { onEnter: (group: GrupoEncuesta) => void }) {
+function InvalidAccess() {
   return (
-    <div className="fade-rise mx-auto max-w-5xl pt-6 md:pt-12">
-      <div className="relative overflow-hidden rounded-[24px] bg-gradient-to-r from-brand-900 to-brand-600 p-7 shadow-[0_18px_50px_rgba(13,47,100,0.20)] sm:p-9">
-        <div className="absolute -right-12 -top-16 h-48 w-48 rounded-full border-[34px] border-white/10" />
-        <div className="relative max-w-3xl">
-          <p className="inline-flex rounded-full bg-danger-500 px-3 py-1 text-[12px] font-bold uppercase tracking-[0.18em] text-white">Acceso por grupo</p>
-          <h1 className="mt-4 text-[clamp(36px,5vw,58px)] font-extrabold leading-[1] tracking-[-0.03em] text-white">Liderazgo Comercial</h1>
-          <p className="mt-5 text-[16px] leading-relaxed text-brand-100">Selecciona el grupo al que perteneces. No necesitas código personal y tus respuestas se guardarán de forma anónima.</p>
-          <div className="mt-4 flex items-start gap-2.5 text-[13px] text-white/85"><ShieldCheck size={18} weight="fill" className="mt-px shrink-0 text-white" />La plataforma no solicita tu nombre ni tu DNI.</div>
-        </div>
-      </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {GRUPOS_ENCUESTA.map((group, index) => (
-          <button key={group.id} onClick={() => onEnter(group.id)} className="group relative overflow-hidden flex items-center gap-4 rounded-[16px] border border-brand-100 bg-surface p-5 text-left shadow-[0_8px_24px_rgba(13,47,100,0.06)] transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_14px_34px_rgba(13,47,100,0.14)]">
-            <span className={`absolute inset-y-0 left-0 w-1.5 ${index % 2 === 0 ? "bg-brand-600" : "bg-danger-500"}`} />
-            <span className="flex h-12 w-12 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
-            <span><span className="block text-[17px] font-semibold text-ink-900">{group.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">Ingresar</span></span>
-            <ArrowRight size={18} weight="bold" className="ml-auto text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function LeaderSegmentGate({ onEnter, onExit }: { onEnter: (segment: SegmentoLider) => void; onExit: () => void }) {
-  return (
-    <div className="fade-rise mx-auto max-w-5xl pt-6 md:pt-12">
-      <div className="rounded-[22px] border border-brand-100 bg-gradient-to-r from-brand-50 to-surface p-7 shadow-[0_14px_40px_rgba(13,47,100,0.10)] sm:p-9">
-        <p className="text-[13px] font-bold uppercase tracking-[0.22em] text-danger-600">Líderes de equipo</p>
-        <h1 className="mt-4 text-[clamp(34px,5vw,56px)] font-extrabold leading-[1] tracking-[-0.03em] text-brand-900">Selecciona tu segmento</h1>
-        <p className="mt-4 max-w-3xl text-[16px] leading-relaxed text-ink-500">Esta selección define a quiénes evaluarás. Tus respuestas continuarán guardándose de forma anónima.</p>
-      </div>
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {SEGMENTOS_LIDERES.map((segment, index) => (
-          <button key={segment.id} onClick={() => onEnter(segment.id)} className="group relative overflow-hidden flex items-center gap-4 rounded-[16px] border border-brand-100 bg-surface p-5 text-left shadow-[0_8px_24px_rgba(13,47,100,0.06)] transition-all hover:-translate-y-0.5 hover:border-brand-600 hover:shadow-[0_14px_34px_rgba(13,47,100,0.14)]">
-            <span className={`absolute inset-y-0 left-0 w-1.5 ${index % 2 === 0 ? "bg-brand-600" : "bg-danger-500"}`} />
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[12px] bg-brand-50 text-brand-600"><UsersThree size={25} weight="bold" /></span>
-            <span><span className="block text-[17px] font-semibold text-ink-900">{segment.label}</span><span className="mt-0.5 block text-[13px] text-ink-500">{segment.descripcion}</span></span>
-            <ArrowRight size={18} weight="bold" className="ml-auto shrink-0 text-ink-300 transition-transform group-hover:translate-x-1 group-hover:text-brand-600" />
-          </button>
-        ))}
-      </div>
-      <button onClick={onExit} className="mt-6 text-sm font-medium text-brand-600">Cambiar de grupo</button>
+    <div className="mx-auto mt-16 max-w-lg rounded-[18px] border border-brand-100 bg-surface p-8 text-center shadow-[0_12px_35px_rgba(13,47,100,0.08)]">
+      <ShieldCheck size={42} weight="fill" className="mx-auto mb-3 text-brand-600" />
+      <h1 className="text-xl font-semibold text-brand-900">Acceso por enlace asignado</h1>
+      <p className="mt-2 text-sm leading-relaxed text-ink-500">Para ingresar a Liderazgo Comercial, utiliza el enlace correspondiente a tu grupo o región. No es necesario seleccionar tu procedencia ni registrar datos personales.</p>
     </div>
   );
 }
@@ -200,7 +155,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
     return () => { active = false; };
   }, [submissionId]);
 
-  if (!evaluated.length) return <Centered title="Este grupo no tiene líderes asignados" onExit={onExit}>Verifica la configuración con la administración de la evaluación.</Centered>;
+  if (!evaluated.length) return <Centered title="Este grupo no tiene líderes asignados" onExit={onExit}>Verifica la configuración con la administración.</Centered>;
   if (!questions.length) return <Centered title="No hay afirmaciones activas" onExit={onExit}>Verifica el contenido en Administración.</Centered>;
   if (status === "cargando") return <div className="mx-auto max-w-3xl pt-10"><Skeleton className="h-64 w-full" /></div>;
   if (status === "hecho") return <Centered title="¡Gracias por participar!" icon onExit={onExit} secondaryLabel="Registrar otra participación de este grupo" onSecondary={onRestart}>Tus respuestas fueron registradas de forma anónima.</Centered>;
@@ -234,7 +189,7 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
     <div className="fade-rise mx-auto flex max-w-5xl flex-col gap-4">
       <div className="flex items-center justify-between gap-3 rounded-[14px] border border-brand-100 bg-brand-50 px-4 py-3">
         <div><span className="text-[12px] font-semibold uppercase tracking-wide text-brand-700">Liderazgo Comercial {EDICION} · {groupLabel}</span><p className="text-[13px] text-ink-500">Líderes incluidos: {evaluated.length}</p></div>
-        <button onClick={onExit} className="text-sm font-medium text-brand-700 hover:text-brand-900">Cambiar grupo</button>
+        <button onClick={onExit} className="text-sm font-medium text-brand-700 hover:text-brand-900">Ver indicaciones</button>
       </div>
       <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-r from-brand-900 to-brand-700 p-6 shadow-[0_14px_38px_rgba(13,47,100,0.18)]">
         <span className="absolute right-0 top-0 h-full w-2 bg-danger-500" />
@@ -262,5 +217,5 @@ function Survey({ group, leaderSegment, onExit, onRestart }: { group: GrupoEncue
 }
 
 function Centered({ title, children, icon, onExit, secondaryLabel, onSecondary }: { title: string; children: React.ReactNode; icon?: boolean; onExit: () => void; secondaryLabel?: string; onSecondary?: () => void }) {
-  return <div className="mx-auto mt-16 max-w-md rounded-[14px] border border-line bg-surface p-8 text-center">{icon && <CheckCircle size={44} weight="fill" className="mx-auto mb-3 text-ok-600" />}<h1 className="text-xl font-semibold text-ink-900">{title}</h1><p className="mt-2 text-sm text-ink-500">{children}</p>{secondaryLabel && onSecondary && <Button variant="primary" onClick={onSecondary} className="mt-5 w-full">{secondaryLabel}</Button>}<button onClick={onExit} className="mt-4 text-sm font-medium text-brand-600">Cambiar de grupo</button></div>;
+  return <div className="mx-auto mt-16 max-w-md rounded-[14px] border border-line bg-surface p-8 text-center">{icon && <CheckCircle size={44} weight="fill" className="mx-auto mb-3 text-ok-600" />}<h1 className="text-xl font-semibold text-ink-900">{title}</h1><p className="mt-2 text-sm text-ink-500">{children}</p>{secondaryLabel && onSecondary && <Button variant="primary" onClick={onSecondary} className="mt-5 w-full">{secondaryLabel}</Button>}<button onClick={onExit} className="mt-4 text-sm font-medium text-brand-600">Ver indicaciones</button></div>;
 }
