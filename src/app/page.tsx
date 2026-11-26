@@ -783,7 +783,7 @@ function GapList({
       ) : (
         <ul className="mt-1.5 flex flex-col gap-1.5">
           {items.map((it) => (
-            <li key={`${it.label}-${it.dotacion}`}>
+            <li key={`${it.dotacion}|${it.categoria ?? ""}|${it.label}`}>
               <button
                 onClick={() => onItem(it)}
                 className={`flex w-full items-center justify-between gap-3 rounded-[8px] px-2.5 py-1.5 text-left transition-colors ${itemCls}`}
@@ -795,6 +795,7 @@ function GapList({
                   </span>
                   <span className="block truncate text-[11.5px] text-ink-500">
                     {it.dotacion}
+                    {it.categoria ? ` · ${it.categoria}` : ""}
                   </span>
                 </span>
                 <span
