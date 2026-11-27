@@ -17,6 +17,7 @@ export type DrawerFilter = {
   dotacion?: string[];
   categoria?: string[];
   cargo?: string[];
+  area?: string[];
 };
 
 export function DetailDrawer({
@@ -25,7 +26,7 @@ export function DetailDrawer({
   onClose,
 }: {
   filter: DrawerFilter | null;
-  empresa: string | null;
+  empresa: string[] | null;
   onClose: () => void;
 }) {
   const isAdmin = useAdmin();
@@ -59,12 +60,17 @@ export function DetailDrawer({
           filter.categoria.length === 1
             ? query.eq("categoria", filter.categoria[0])
             : query.in("categoria", filter.categoria);
+      if (filter.area !== undefined)
+        query =
+          filter.area.length === 1
+            ? query.eq("area", filter.area[0])
+            : query.in("area", filter.area);
       if (filter.cargo !== undefined)
         query =
           filter.cargo.length === 1
             ? query.eq("cargo", filter.cargo[0])
             : query.in("cargo", filter.cargo);
-      if (empresa) query = query.eq("empresa", empresa);
+      if (empresa?.length) query = query.in("empresa", empresa);
       const { data, error: err } = await query;
       if (cancelled) return;
       if (err) setError(err.message);

@@ -10,6 +10,7 @@ export type CellFilter = {
   dotacion?: string;
   categoria?: string;
   cargo?: string;
+  area?: string;
   label: string;
 };
 
@@ -23,6 +24,7 @@ export function MatrixTable({
   budgetAvailable,
   onCellClick,
   expandSignal,
+  firstColumnLabel = "Dotación / Categoría / Cargo",
 }: {
   nodes: MatrixNode[];
   totalNode: MatrixNode;
@@ -32,6 +34,7 @@ export function MatrixTable({
   onCellClick: (f: CellFilter) => void;
   /** contador que fuerza expandir (+n) o colapsar (-n) todo */
   expandSignal: number;
+  firstColumnLabel?: string;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
   const [lastSignal, setLastSignal] = useState(0);
@@ -82,7 +85,7 @@ export function MatrixTable({
         <thead>
           <tr>
             <th className="sticky left-0 top-0 z-30 min-w-[260px] border-b border-line bg-surface px-4 py-2.5 text-left text-[11.5px] font-medium uppercase tracking-wide text-ink-500 sm:min-w-[300px]">
-              Dotación / Categoría / Cargo
+              {firstColumnLabel}
             </th>
             {budgetAvailable && (
               <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-brand-25 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
@@ -223,9 +226,10 @@ function Row({
               onClick={() =>
                 onCellClick({
                   period: p,
-                  dotacion: isTotal ? undefined : node.dotacion,
+                  dotacion: isTotal || node.area !== undefined ? undefined : node.dotacion,
                   categoria: node.categoria,
                   cargo: node.cargo,
+                  area: node.area,
                   label: node.label,
                 })
               }

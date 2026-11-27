@@ -12,6 +12,7 @@ import {
   applyRulesToAgg,
   applyRulesToBudget,
   buildMatrix,
+  buildByGerencia,
   buildValueMaps,
   fetchAggregate,
   fetchBudget,
@@ -27,6 +28,7 @@ import { Button, EmptyState, Segmented, Select, Skeleton, TextInput } from "@/co
 import { EvolutionChart, LegendRow, MovimientosChart, C } from "@/components/charts";
 import { GapLegend, GapMeters } from "@/components/gapmeter";
 import { MatrixTable, type CellFilter } from "@/components/matrix";
+import { MultiSelect } from "@/components/multi-select";
 import { DetailDrawer, type DrawerFilter } from "@/components/drawer";
 import { AuthGuard } from "@/components/auth-guard";
 
@@ -41,12 +43,13 @@ function DashboardContent() {
   const [initialized, setInitialized] = useState(false);
 
   const [ventana, setVentana] = useState<string>("12m");
-  const [empresa, setEmpresa] = useState<string>("");
+  const [empresa, setEmpresa] = useState<string[]>([]);
   const [modo, setModo] = useState<Modo>("activos");
 
   const [cell, setCell] = useState<DrawerFilter | null>(null);
   const [q, setQ] = useState("");
   const [expandSignal, setExpandSignal] = useState(0);
+  const [expandGer, setExpandGer] = useState(0);
 
   const load = useCallback(() => {
     setError(null);
@@ -71,13 +74,23 @@ function DashboardContent() {
     const nogasa = Array.from(new Set(agg.map((r) => r.empresa))).find((e) =>
       e.toLocaleUpperCase("es").includes("NOGASA")
     );
-    if (nogasa) setEmpresa(nogasa);
+    if (nogasa) setEmpresa([nogasa]);
     setInitialized(true);
   }, [agg, initialized]);
 
   useEffect(() => {
-    fetchMovimientos(empresa || null)
-      .then(setMov)
+    // la consulta acepta una empresa a la vez: se pide por cada una y se suman por mes
+    const lista = empresa.length ? empresa : [null];
+    Promise.all(lista.map((e) => fetchMovimientos(e)))
+      .then((res) => {
+        const byP = new Map<string, Movimiento>();
+        for (const m of res.flat()) {
+          const prev = byP.get(m.period);
+          if (prev) byP.set(m.period, { ...prev, altas: prev.altas + m.altas, bajas: prev.bajas + m.bajas });
+          else byP.set(m.period, { ...m });
+        }
+        setMov(Array.from(byP.values()).sort((a, b) => a.period.localeCompare(b.period)));
+      })
       .catch(() => setMov([]));
   }, [empresa]);
 
@@ -110,7 +123,7 @@ function DashboardContent() {
   }, [agg, budget]);
 
   const fAgg = useMemo(
-    () => mAgg.filter((r) => !empresa || r.empresa === empresa),
+    () => mAgg.filter((r) => !empresa.length || empresa.includes(r.empresa)),
     [mAgg, empresa]
   );
 
@@ -124,6 +137,7 @@ function DashboardContent() {
       categoria:
         f.categoria !== undefined ? originalsOf(ruleMaps, "categoria", f.categoria) : undefined,
       cargo: f.cargo !== undefined ? originalsOf(ruleMaps, "cargo", f.cargo) : undefined,
+      area: f.area !== undefined ? originalsOf(ruleMaps, "area", f.area) : undefined,
     }),
     [ruleMaps]
   );
@@ -167,7 +181,7 @@ function DashboardContent() {
   const fBudget = useMemo(
     () =>
       mBudget.filter(
-        (b) => b.anio === budgetYear && (!empresa || b.empresa === empresa)
+        (b) => b.anio === budgetYear && (!empresa.length || empresa.includes(b.empresa))
       ),
     [mBudget, budgetYear, empresa]
   );
@@ -269,6 +283,11 @@ function DashboardContent() {
   }, [tree]);
 
   const visibleTree = useMemo(() => filterMatrix(tree, q), [tree, q]);
+
+  const gerencias = useMemo(
+    () => buildByGerencia(fAgg, fBudget, periods, modo === "todos"),
+    [fAgg, fBudget, periods, modo]
+  );
 
   const brechas = useMemo(() => {
     if (!budgetAvailable || !lastPeriod) return null;
@@ -401,19 +420,14 @@ function DashboardContent() {
               </option>
             ))}
           </Select>
-          <Select
+          <MultiSelect
+            options={empresas}
             value={empresa}
-            onChange={(e) => setEmpresa(e.target.value)}
-            aria-label="Empresa"
-            className="max-w-[210px]"
-          >
-            <option value="">Todas las empresas</option>
-            {empresas.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </Select>
+            onChange={setEmpresa}
+            allLabel="Todas las empresas"
+            ariaLabel="Empresa"
+            className="w-[210px]"
+          />
           <Segmented
             value={modo}
             onChange={setModo}
@@ -729,9 +743,47 @@ function DashboardContent() {
         )}
       </section>
 
+      {/* HC por gerencia */}
+      <section className="rounded-[12px] border border-line bg-surface">
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+          <div>
+            <h2 className="text-[14px] font-semibold text-ink-900">
+              Dotación por gerencia, área y cargo
+            </h2>
+            <p className="text-[12px] text-ink-500">
+              HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={() => setExpandGer((s) => s + 1)}>
+              <ArrowsOutSimple size={14} /> Expandir
+            </Button>
+            <Button size="sm" onClick={() => setExpandGer((s) => s - 1)}>
+              <ArrowsInSimple size={14} /> Colapsar
+            </Button>
+          </div>
+        </header>
+        {periods.length > 0 ? (
+          <MatrixTable
+            nodes={gerencias}
+            totalNode={totalNode}
+            periods={periods}
+            labels={labels}
+            budgetAvailable={budgetAvailable}
+            onCellClick={(f) => setCell(toDrawer(f))}
+            expandSignal={expandGer}
+            firstColumnLabel="Gerencia / Área / Cargo"
+          />
+        ) : (
+          <p className="px-5 py-10 text-center text-sm text-ink-500">
+            Sin meses cargados para este periodo.
+          </p>
+        )}
+      </section>
+
       <DetailDrawer
         filter={cell}
-        empresa={empresa || null}
+        empresa={empresa.length ? empresa : null}
         onClose={() => setCell(null)}
       />
     </div>
