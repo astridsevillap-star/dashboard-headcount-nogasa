@@ -73,4 +73,6 @@ export type MatrixNode = {
   dotacion: string;
   categoria?: string;
   cargo?: string;
+  /** Gerencia (campo "área" de la data y del presupuesto) */
+  area?: string;
 };

@@ -17,6 +17,7 @@ export type DrawerFilter = {
   dotacion?: string[];
   categoria?: string[];
   cargo?: string[];
+  area?: string[];
 };
 
 export function DetailDrawer({
@@ -59,6 +60,11 @@ export function DetailDrawer({
           filter.categoria.length === 1
             ? query.eq("categoria", filter.categoria[0])
             : query.in("categoria", filter.categoria);
+      if (filter.area !== undefined)
+        query =
+          filter.area.length === 1
+            ? query.eq("area", filter.area[0])
+            : query.in("area", filter.area);
       if (filter.cargo !== undefined)
         query =
           filter.cargo.length === 1

@@ -353,6 +353,49 @@ export function buildMatrix(
   return out;
 }
 
+/**
+ * HC por Gerencia (campo "área") y mes, con su presupuesto. Una fila por
+ * gerencia, sin niveles; incluye las gerencias que solo tienen presupuesto.
+ */
+export function buildByGerencia(
+  rows: AggRow[],
+  budget: BudgetRow[],
+  periods: string[],
+  incluirCesados: boolean
+): MatrixNode[] {
+  const map = new Map<string, MatrixNode>();
+  const nodeFor = (area: string): MatrixNode => {
+    const label = area || "(sin gerencia)";
+    let n = map.get(label);
+    if (!n) {
+      n = {
+        key: `ger›${label}`,
+        label,
+        level: 0,
+        budget: 0,
+        hc: {},
+        children: [],
+        dotacion: "",
+        area,
+      };
+      map.set(label, n);
+    }
+    return n;
+  };
+  const pset = new Set(periods);
+  for (const r of rows) {
+    if (!pset.has(r.period)) continue;
+    const v = hcOf(r, incluirCesados);
+    if (v === 0) continue;
+    const n = nodeFor(r.area);
+    n.hc[r.period] = (n.hc[r.period] ?? 0) + v;
+  }
+  for (const b of budget) nodeFor(b.area).budget += b.cantidad;
+  return Array.from(map.values()).sort((a, b) =>
+    a.label.localeCompare(b.label, "es")
+  );
+}
+
 /** Filtra un árbol ya construido por texto (mantiene ancestros de coincidencias) */
 export function filterMatrix(nodes: MatrixNode[], q: string): MatrixNode[] {
   if (!q.trim()) return nodes;

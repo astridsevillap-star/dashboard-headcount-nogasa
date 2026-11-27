@@ -12,6 +12,7 @@ import {
   applyRulesToAgg,
   applyRulesToBudget,
   buildMatrix,
+  buildByGerencia,
   buildValueMaps,
   fetchAggregate,
   fetchBudget,
@@ -124,6 +125,7 @@ function DashboardContent() {
       categoria:
         f.categoria !== undefined ? originalsOf(ruleMaps, "categoria", f.categoria) : undefined,
       cargo: f.cargo !== undefined ? originalsOf(ruleMaps, "cargo", f.cargo) : undefined,
+      area: f.area !== undefined ? originalsOf(ruleMaps, "area", f.area) : undefined,
     }),
     [ruleMaps]
   );
@@ -269,6 +271,11 @@ function DashboardContent() {
   }, [tree]);
 
   const visibleTree = useMemo(() => filterMatrix(tree, q), [tree, q]);
+
+  const gerencias = useMemo(
+    () => buildByGerencia(fAgg, fBudget, periods, modo === "todos"),
+    [fAgg, fBudget, periods, modo]
+  );
 
   const brechas = useMemo(() => {
     if (!budgetAvailable || !lastPeriod) return null;
@@ -721,6 +728,34 @@ function DashboardContent() {
             budgetAvailable={budgetAvailable}
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
+          />
+        ) : (
+          <p className="px-5 py-10 text-center text-sm text-ink-500">
+            Sin meses cargados para este periodo.
+          </p>
+        )}
+      </section>
+
+      {/* HC por gerencia */}
+      <section className="rounded-[12px] border border-line bg-surface">
+        <header className="border-b border-line px-5 py-3.5">
+          <h2 className="text-[14px] font-semibold text-ink-900">
+            Dotación por gerencia
+          </h2>
+          <p className="text-[12px] text-ink-500">
+            HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
+          </p>
+        </header>
+        {periods.length > 0 ? (
+          <MatrixTable
+            nodes={gerencias}
+            totalNode={totalNode}
+            periods={periods}
+            labels={labels}
+            budgetAvailable={budgetAvailable}
+            onCellClick={(f) => setCell(toDrawer(f))}
+            expandSignal={0}
+            firstColumnLabel="Gerencia"
           />
         ) : (
           <p className="px-5 py-10 text-center text-sm text-ink-500">
