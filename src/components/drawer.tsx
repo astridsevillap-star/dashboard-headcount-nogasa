@@ -26,7 +26,7 @@ export function DetailDrawer({
   onClose,
 }: {
   filter: DrawerFilter | null;
-  empresa: string | null;
+  empresa: string[] | null;
   onClose: () => void;
 }) {
   const isAdmin = useAdmin();
@@ -70,7 +70,7 @@ export function DetailDrawer({
           filter.cargo.length === 1
             ? query.eq("cargo", filter.cargo[0])
             : query.in("cargo", filter.cargo);
-      if (empresa) query = query.eq("empresa", empresa);
+      if (empresa?.length) query = query.in("empresa", empresa);
       const { data, error: err } = await query;
       if (cancelled) return;
       if (err) setError(err.message);

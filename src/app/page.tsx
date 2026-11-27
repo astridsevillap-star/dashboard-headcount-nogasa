@@ -28,6 +28,7 @@ import { Button, EmptyState, Segmented, Select, Skeleton, TextInput } from "@/co
 import { EvolutionChart, LegendRow, MovimientosChart, C } from "@/components/charts";
 import { GapLegend, GapMeters } from "@/components/gapmeter";
 import { MatrixTable, type CellFilter } from "@/components/matrix";
+import { MultiSelect } from "@/components/multi-select";
 import { DetailDrawer, type DrawerFilter } from "@/components/drawer";
 import { AuthGuard } from "@/components/auth-guard";
 
@@ -42,7 +43,7 @@ function DashboardContent() {
   const [initialized, setInitialized] = useState(false);
 
   const [ventana, setVentana] = useState<string>("12m");
-  const [empresa, setEmpresa] = useState<string>("");
+  const [empresa, setEmpresa] = useState<string[]>([]);
   const [modo, setModo] = useState<Modo>("activos");
 
   const [cell, setCell] = useState<DrawerFilter | null>(null);
@@ -73,13 +74,23 @@ function DashboardContent() {
     const nogasa = Array.from(new Set(agg.map((r) => r.empresa))).find((e) =>
       e.toLocaleUpperCase("es").includes("NOGASA")
     );
-    if (nogasa) setEmpresa(nogasa);
+    if (nogasa) setEmpresa([nogasa]);
     setInitialized(true);
   }, [agg, initialized]);
 
   useEffect(() => {
-    fetchMovimientos(empresa || null)
-      .then(setMov)
+    // la consulta acepta una empresa a la vez: se pide por cada una y se suman por mes
+    const lista = empresa.length ? empresa : [null];
+    Promise.all(lista.map((e) => fetchMovimientos(e)))
+      .then((res) => {
+        const byP = new Map<string, Movimiento>();
+        for (const m of res.flat()) {
+          const prev = byP.get(m.period);
+          if (prev) byP.set(m.period, { ...prev, altas: prev.altas + m.altas, bajas: prev.bajas + m.bajas });
+          else byP.set(m.period, { ...m });
+        }
+        setMov(Array.from(byP.values()).sort((a, b) => a.period.localeCompare(b.period)));
+      })
       .catch(() => setMov([]));
   }, [empresa]);
 
@@ -112,7 +123,7 @@ function DashboardContent() {
   }, [agg, budget]);
 
   const fAgg = useMemo(
-    () => mAgg.filter((r) => !empresa || r.empresa === empresa),
+    () => mAgg.filter((r) => !empresa.length || empresa.includes(r.empresa)),
     [mAgg, empresa]
   );
 
@@ -170,7 +181,7 @@ function DashboardContent() {
   const fBudget = useMemo(
     () =>
       mBudget.filter(
-        (b) => b.anio === budgetYear && (!empresa || b.empresa === empresa)
+        (b) => b.anio === budgetYear && (!empresa.length || empresa.includes(b.empresa))
       ),
     [mBudget, budgetYear, empresa]
   );
@@ -409,19 +420,14 @@ function DashboardContent() {
               </option>
             ))}
           </Select>
-          <Select
+          <MultiSelect
+            options={empresas}
             value={empresa}
-            onChange={(e) => setEmpresa(e.target.value)}
-            aria-label="Empresa"
-            className="max-w-[210px]"
-          >
-            <option value="">Todas las empresas</option>
-            {empresas.map((e) => (
-              <option key={e} value={e}>
-                {e}
-              </option>
-            ))}
-          </Select>
+            onChange={setEmpresa}
+            allLabel="Todas las empresas"
+            ariaLabel="Empresa"
+            className="w-[210px]"
+          />
           <Segmented
             value={modo}
             onChange={setModo}
@@ -777,7 +783,7 @@ function DashboardContent() {
 
       <DetailDrawer
         filter={cell}
-        empresa={empresa || null}
+        empresa={empresa.length ? empresa : null}
         onClose={() => setCell(null)}
       />
     </div>
