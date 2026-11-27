@@ -10,10 +10,52 @@ import type {
   MonthSummary,
 } from "./types";
 
+/**
+ * Meses en que quien cesa el último día del mes cuenta como activo al cierre.
+ * La base de datos cuenta solo a quienes tienen cese posterior al fin de mes;
+ * aquí se suman a "activos" las personas con cese exactamente el último día.
+ */
+const CESE_ULTIMO_DIA_CUENTA = ["2026-10-01"];
+
+function ultimoDiaDelMes(period: string): string {
+  const [y, m] = period.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m, 0)).getUTCDate();
+  return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+async function sumarCeseUltimoDia(rows: AggRow[]): Promise<AggRow[]> {
+  const out = rows.map((r) => ({ ...r }));
+  const key = (r: Pick<AggRow, "empresa" | "dotacion" | "categoria" | "area" | "cargo">) =>
+    [r.empresa, r.dotacion, r.categoria, r.area, r.cargo].join("|");
+  for (const period of CESE_ULTIMO_DIA_CUENTA) {
+    // el detalle por persona solo lo puede leer un administrador; si falla, no se ajusta
+    const { data, error } = await supabase
+      .from("headcount_records")
+      .select("empresa, dotacion, categoria, area, cargo")
+      .eq("period", period)
+      .eq("fecha_cese", ultimoDiaDelMes(period))
+      .limit(5000);
+    if (error || !data) continue;
+    const idx = new Map<string, AggRow>();
+    for (const r of out) if (r.period === period) idx.set(key(r), r);
+    for (const d of data as Pick<AggRow, "empresa" | "dotacion" | "categoria" | "area" | "cargo">[]) {
+      const hit = idx.get(key(d));
+      if (hit) hit.activos += 1;
+      else {
+        // el total ya incluye a la persona en su fila original: aquí solo suma a activos
+        const n: AggRow = { period, ...d, total: 0, activos: 1 };
+        out.push(n);
+        idx.set(key(n), n);
+      }
+    }
+  }
+  return out;
+}
+
 export async function fetchAggregate(): Promise<AggRow[]> {
   const { data, error } = await supabase.rpc("hc_aggregate_json");
   if (error) throw new Error(error.message);
-  return (data ?? []) as AggRow[];
+  return sumarCeseUltimoDia((data ?? []) as AggRow[]);
 }
 
 export async function fetchMovimientos(

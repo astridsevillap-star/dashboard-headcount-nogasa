@@ -406,6 +406,9 @@ function DashboardContent() {
               ? `Último mes cargado: ${periodLabel(lastPeriod)}`
               : "Sin meses cargados para este año"}
           </p>
+          <p className="text-[12px] text-ink-500">
+            Octubre 2026 cuenta como activos a quienes cesaron el 31/10.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select
