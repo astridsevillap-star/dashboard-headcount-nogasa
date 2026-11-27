@@ -354,8 +354,9 @@ export function buildMatrix(
 }
 
 /**
- * HC por Gerencia (campo "área") y mes, con su presupuesto. Una fila por
- * gerencia, sin niveles; incluye las gerencias que solo tienen presupuesto.
+ * Árbol Gerencia → Área → Cargo con HC por mes y presupuesto. La gerencia es
+ * el campo "área" de la data y del presupuesto; el área es la categoría.
+ * Incluye los nodos que solo tienen presupuesto (vacantes).
  */
 export function buildByGerencia(
   rows: AggRow[],
@@ -363,37 +364,72 @@ export function buildByGerencia(
   periods: string[],
   incluirCesados: boolean
 ): MatrixNode[] {
-  const map = new Map<string, MatrixNode>();
-  const nodeFor = (area: string): MatrixNode => {
-    const label = area || "(sin gerencia)";
-    let n = map.get(label);
-    if (!n) {
-      n = {
-        key: `ger›${label}`,
-        label,
-        level: 0,
-        budget: 0,
-        hc: {},
-        children: [],
-        dotacion: "",
-        area,
-      };
-      map.set(label, n);
+  const roots = new Map<string, MatrixNode>();
+  const mk = (
+    key: string,
+    label: string,
+    level: 0 | 1 | 2,
+    area: string,
+    categoria?: string,
+    cargo?: string
+  ): MatrixNode => ({
+    key,
+    label,
+    level,
+    budget: 0,
+    hc: {},
+    children: [],
+    dotacion: "",
+    area,
+    categoria,
+    cargo,
+  });
+  const nodeFor = (area: string, categoria: string, cargo: string): MatrixNode => {
+    const g = area || "(sin gerencia)";
+    let root = roots.get(g);
+    if (!root) {
+      root = mk(`ger›${g}`, g, 0, area);
+      roots.set(g, root);
     }
-    return n;
+    const c = categoria || "(sin área)";
+    let cat = root.children.find((n) => n.label === c);
+    if (!cat) {
+      cat = mk(`ger›${g}›${c}`, c, 1, area, categoria);
+      root.children.push(cat);
+    }
+    const k = cargo || "(sin cargo)";
+    let leaf = cat.children.find((n) => n.label === k);
+    if (!leaf) {
+      leaf = mk(`ger›${g}›${c}›${k}`, k, 2, area, categoria, cargo);
+      cat.children.push(leaf);
+    }
+    return leaf;
   };
   const pset = new Set(periods);
   for (const r of rows) {
     if (!pset.has(r.period)) continue;
     const v = hcOf(r, incluirCesados);
     if (v === 0) continue;
-    const n = nodeFor(r.area);
-    n.hc[r.period] = (n.hc[r.period] ?? 0) + v;
+    const leaf = nodeFor(r.area, r.categoria, r.cargo);
+    leaf.hc[r.period] = (leaf.hc[r.period] ?? 0) + v;
   }
-  for (const b of budget) nodeFor(b.area).budget += b.cantidad;
-  return Array.from(map.values()).sort((a, b) =>
-    a.label.localeCompare(b.label, "es")
-  );
+  for (const b of budget) nodeFor(b.area, b.categoria, b.cargo).budget += b.cantidad;
+
+  const rollup = (n: MatrixNode): void => {
+    for (const c of n.children) {
+      rollup(c);
+      n.budget += c.budget;
+      for (const [p, v] of Object.entries(c.hc)) n.hc[p] = (n.hc[p] ?? 0) + v;
+    }
+  };
+  const sortRec = (list: MatrixNode[]) => {
+    list.sort((x, y) => x.label.localeCompare(y.label, "es"));
+    for (const n of list) sortRec(n.children);
+  };
+  const out = Array.from(roots.values());
+  for (const r of out) rollup(r);
+  sortRec(out);
+  return out;
 }
 
 /** Filtra un árbol ya construido por texto (mantiene ancestros de coincidencias) */

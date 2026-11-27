@@ -48,6 +48,7 @@ function DashboardContent() {
   const [cell, setCell] = useState<DrawerFilter | null>(null);
   const [q, setQ] = useState("");
   const [expandSignal, setExpandSignal] = useState(0);
+  const [expandGer, setExpandGer] = useState(0);
 
   const load = useCallback(() => {
     setError(null);
@@ -738,13 +739,23 @@ function DashboardContent() {
 
       {/* HC por gerencia */}
       <section className="rounded-[12px] border border-line bg-surface">
-        <header className="border-b border-line px-5 py-3.5">
-          <h2 className="text-[14px] font-semibold text-ink-900">
-            Dotación por gerencia
-          </h2>
-          <p className="text-[12px] text-ink-500">
-            HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
-          </p>
+        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+          <div>
+            <h2 className="text-[14px] font-semibold text-ink-900">
+              Dotación por gerencia, área y cargo
+            </h2>
+            <p className="text-[12px] text-ink-500">
+              HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" onClick={() => setExpandGer((s) => s + 1)}>
+              <ArrowsOutSimple size={14} /> Expandir
+            </Button>
+            <Button size="sm" onClick={() => setExpandGer((s) => s - 1)}>
+              <ArrowsInSimple size={14} /> Colapsar
+            </Button>
+          </div>
         </header>
         {periods.length > 0 ? (
           <MatrixTable
@@ -754,8 +765,8 @@ function DashboardContent() {
             labels={labels}
             budgetAvailable={budgetAvailable}
             onCellClick={(f) => setCell(toDrawer(f))}
-            expandSignal={0}
-            firstColumnLabel="Gerencia"
+            expandSignal={expandGer}
+            firstColumnLabel="Gerencia / Área / Cargo"
           />
         ) : (
           <p className="px-5 py-10 text-center text-sm text-ink-500">
