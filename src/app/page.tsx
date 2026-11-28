@@ -793,6 +793,7 @@ function DashboardContent() {
       </div>
 
       {/* matriz jerárquica */}
+      {MOSTRAR_PANELES_EXTRA && (
       <section className="rounded-[12px] border border-line bg-surface">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
           <div>
@@ -837,7 +838,7 @@ function DashboardContent() {
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
             budgetLabel={
-              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+              budgetYear !== null ? String(budgetYear - 1) : undefined
             }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
@@ -848,6 +849,7 @@ function DashboardContent() {
           </p>
         )}
       </section>
+      )}
 
       {/* HC por gerencia */}
       <section className="rounded-[12px] border border-line bg-surface">
@@ -879,7 +881,7 @@ function DashboardContent() {
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
             budgetLabel={
-              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+              budgetYear !== null ? String(budgetYear - 1) : undefined
             }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandGer}
