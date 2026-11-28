@@ -837,7 +837,7 @@ function DashboardContent() {
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
             budgetLabel={
-              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+              budgetYear !== null ? String(budgetYear - 1) : undefined
             }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
@@ -879,7 +879,7 @@ function DashboardContent() {
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
             budgetLabel={
-              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+              budgetYear !== null ? String(budgetYear - 1) : undefined
             }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandGer}

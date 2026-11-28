@@ -90,24 +90,39 @@ export function MatrixTable({
       <table className="w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           <tr>
-            <th className="sticky left-0 top-0 z-30 min-w-[260px] border-b border-line bg-surface px-4 py-2.5 text-left text-[11.5px] font-medium uppercase tracking-wide text-ink-500 sm:min-w-[300px]">
+            <th className="sticky left-0 top-0 z-30 h-8 border-b border-line bg-surface" />
+            {budgetAvailable && (
+              <th className="sticky top-0 z-20 h-8 border-l border-line bg-brand-25" />
+            )}
+            <th
+              colSpan={periods.length}
+              className="sticky top-0 z-20 h-8 border-b border-line bg-surface px-3 text-center text-[11.5px] font-semibold uppercase tracking-wide text-ink-700"
+            >
+              {periods[0]?.slice(0, 4)}
+            </th>
+            {budget2Label && (
+              <th className="sticky top-0 z-20 h-8 border-l border-line bg-warn-100/60" />
+            )}
+          </tr>
+          <tr>
+            <th className="sticky left-0 top-8 z-30 min-w-[260px] border-b border-line bg-surface px-4 py-2.5 text-left text-[11.5px] font-medium uppercase tracking-wide text-ink-500 sm:min-w-[300px]">
               {firstColumnLabel}
             </th>
             {budgetAvailable && (
-              <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-brand-25 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
+              <th className="sticky top-8 z-20 min-w-[72px] border-b border-l border-line bg-brand-25 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
                 {budgetLabel ?? "Ppto."}
               </th>
             )}
             {periods.map((p) => (
               <th
                 key={p}
-                className="sticky top-0 z-20 min-w-[74px] border-b border-line bg-surface px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500"
+                className="sticky top-8 z-20 min-w-[74px] border-b border-line bg-surface px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500"
               >
                 {labels[p]}
               </th>
             ))}
             {budget2Label && (
-              <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-warn-100/60 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
+              <th className="sticky top-8 z-20 min-w-[72px] border-b border-l border-line bg-warn-100/60 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
                 {budget2Label}
               </th>
             )}
