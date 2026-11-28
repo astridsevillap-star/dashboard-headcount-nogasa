@@ -792,6 +792,7 @@ function DashboardContent() {
         )}
       </div>
 
+      {MOSTRAR_PANELES_EXTRA && (
       {/* matriz jerárquica */}
       <section className="rounded-[12px] border border-line bg-surface">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
@@ -848,6 +849,7 @@ function DashboardContent() {
           </p>
         )}
       </section>
+      )}
 
       {/* HC por gerencia */}
       <section className="rounded-[12px] border border-line bg-surface">
