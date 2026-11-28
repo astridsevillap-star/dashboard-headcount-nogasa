@@ -22,6 +22,7 @@ export function MatrixTable({
   periods,
   labels,
   budgetAvailable,
+  budget2Label,
   onCellClick,
   expandSignal,
   firstColumnLabel = "Dotación / Categoría / Cargo",
@@ -31,6 +32,8 @@ export function MatrixTable({
   periods: string[];
   labels: Record<string, string>;
   budgetAvailable: boolean;
+  /** Etiqueta de la columna de presupuesto del año siguiente (si hay) */
+  budget2Label?: string;
   onCellClick: (f: CellFilter) => void;
   /** contador que fuerza expandir (+n) o colapsar (-n) todo */
   expandSignal: number;
@@ -92,6 +95,11 @@ export function MatrixTable({
                 Ppto.
               </th>
             )}
+            {budget2Label && (
+              <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-warn-100/60 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
+                {budget2Label}
+              </th>
+            )}
             {periods.map((p) => (
               <th
                 key={p}
@@ -107,6 +115,7 @@ export function MatrixTable({
             row={{ node: totalNode, hasChildren: false, expanded: false }}
             periods={periods}
             budgetAvailable={budgetAvailable}
+            budget2Label={budget2Label}
             onCellClick={onCellClick}
             toggle={toggle}
             isTotal
@@ -117,6 +126,7 @@ export function MatrixTable({
               row={r}
               periods={periods}
               budgetAvailable={budgetAvailable}
+              budget2Label={budget2Label}
               onCellClick={onCellClick}
               toggle={toggle}
             />
@@ -131,6 +141,7 @@ function Row({
   row,
   periods,
   budgetAvailable,
+  budget2Label,
   onCellClick,
   toggle,
   isTotal = false,
@@ -138,6 +149,8 @@ function Row({
   row: FlatRow;
   periods: string[];
   budgetAvailable: boolean;
+  /** Etiqueta de la columna de presupuesto del año siguiente (si hay) */
+  budget2Label?: string;
   onCellClick: (f: CellFilter) => void;
   toggle: (key: string) => void;
   isTotal?: boolean;
@@ -194,6 +207,12 @@ function Row({
       {budgetAvailable && (
         <td className="tnum border-b border-l border-line-soft bg-brand-25/60 px-3 text-right font-mono text-[12.5px] text-ink-700">
           {node.budget > 0 ? num(node.budget) : "–"}
+        </td>
+      )}
+
+      {budget2Label && (
+        <td className="tnum border-b border-l border-line-soft bg-warn-100/30 px-3 text-right font-mono text-[12.5px] text-ink-700">
+          {(node.budget2 ?? 0) > 0 ? num(node.budget2 ?? 0) : "–"}
         </td>
       )}
 

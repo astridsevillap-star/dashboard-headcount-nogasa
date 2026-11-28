@@ -186,6 +186,17 @@ function DashboardContent() {
     [mBudget, budgetYear, empresa]
   );
 
+  // presupuesto del año siguiente (p. ej. 2027): columna adicional, si está cargado
+  const budget2Year = budgetYear !== null ? budgetYear + 1 : null;
+  const fBudget2 = useMemo(
+    () =>
+      mBudget.filter(
+        (b) => b.anio === budget2Year && (!empresa.length || empresa.includes(b.empresa))
+      ),
+    [mBudget, budget2Year, empresa]
+  );
+  const budget2Label = fBudget2.length > 0 && budget2Year !== null ? String(budget2Year) : undefined;
+
   const budgetTotal = useMemo(
     () => fBudget.reduce((s, b) => s + b.cantidad, 0),
     [fBudget]
@@ -259,8 +270,8 @@ function DashboardContent() {
   }, [mov, periods, labels]);
 
   const tree = useMemo(
-    () => buildMatrix(fAgg, fBudget, periods, modo === "todos"),
-    [fAgg, fBudget, periods, modo]
+    () => buildMatrix(fAgg, fBudget, periods, modo === "todos", fBudget2),
+    [fAgg, fBudget, periods, modo, fBudget2]
   );
 
   const totalNode = useMemo<MatrixNode>(() => {
@@ -275,6 +286,7 @@ function DashboardContent() {
     };
     for (const n of tree) {
       total.budget += n.budget;
+      total.budget2 = (total.budget2 ?? 0) + (n.budget2 ?? 0);
       for (const [p, v] of Object.entries(n.hc)) {
         total.hc[p] = (total.hc[p] ?? 0) + v;
       }
@@ -285,8 +297,8 @@ function DashboardContent() {
   const visibleTree = useMemo(() => filterMatrix(tree, q), [tree, q]);
 
   const gerencias = useMemo(
-    () => buildByGerencia(fAgg, fBudget, periods, modo === "todos"),
-    [fAgg, fBudget, periods, modo]
+    () => buildByGerencia(fAgg, fBudget, periods, modo === "todos", fBudget2),
+    [fAgg, fBudget, periods, modo, fBudget2]
   );
 
   const brechas = useMemo(() => {
@@ -736,6 +748,7 @@ function DashboardContent() {
             periods={periods}
             labels={labels}
             budgetAvailable={budgetAvailable}
+            budget2Label={budget2Label}
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
           />
@@ -773,6 +786,7 @@ function DashboardContent() {
             periods={periods}
             labels={labels}
             budgetAvailable={budgetAvailable}
+            budget2Label={budget2Label}
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandGer}
             firstColumnLabel="Gerencia / Área / Cargo"

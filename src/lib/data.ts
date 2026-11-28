@@ -314,7 +314,8 @@ export function buildMatrix(
   rows: AggRow[],
   budget: BudgetRow[],
   periods: string[],
-  incluirCesados: boolean
+  incluirCesados: boolean,
+  budget2: BudgetRow[] = []
 ): MatrixNode[] {
   const mk = (
     key: string,
@@ -373,12 +374,17 @@ export function buildMatrix(
     const leaf = nodeFor(b.dotacion, b.categoria, b.cargo);
     leaf.budget += b.cantidad;
   }
+  for (const b of budget2) {
+    const leaf = nodeFor(b.dotacion, b.categoria, b.cargo);
+    leaf.budget2 = (leaf.budget2 ?? 0) + b.cantidad;
+  }
 
   // acumula hojas → padres
   const rollup = (n: MatrixNode): void => {
     for (const c of n.children) {
       rollup(c);
       n.budget += c.budget;
+      n.budget2 = (n.budget2 ?? 0) + (c.budget2 ?? 0);
       for (const [p, v] of Object.entries(c.hc)) {
         n.hc[p] = (n.hc[p] ?? 0) + v;
       }
@@ -404,7 +410,8 @@ export function buildByGerencia(
   rows: AggRow[],
   budget: BudgetRow[],
   periods: string[],
-  incluirCesados: boolean
+  incluirCesados: boolean,
+  budget2: BudgetRow[] = []
 ): MatrixNode[] {
   const roots = new Map<string, MatrixNode>();
   const mk = (
@@ -456,11 +463,16 @@ export function buildByGerencia(
     leaf.hc[r.period] = (leaf.hc[r.period] ?? 0) + v;
   }
   for (const b of budget) nodeFor(b.area, b.categoria, b.cargo).budget += b.cantidad;
+  for (const b of budget2) {
+    const leaf = nodeFor(b.area, b.categoria, b.cargo);
+    leaf.budget2 = (leaf.budget2 ?? 0) + b.cantidad;
+  }
 
   const rollup = (n: MatrixNode): void => {
     for (const c of n.children) {
       rollup(c);
       n.budget += c.budget;
+      n.budget2 = (n.budget2 ?? 0) + (c.budget2 ?? 0);
       for (const [p, v] of Object.entries(c.hc)) n.hc[p] = (n.hc[p] ?? 0) + v;
     }
   };
