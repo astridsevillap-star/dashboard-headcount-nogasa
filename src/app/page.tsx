@@ -350,7 +350,13 @@ function DashboardContent() {
   const visibleTree = useMemo(() => filterMatrix(tree, q), [tree, q]);
 
   const gerencias = useMemo(
-    () => buildByGerencia(fAgg, fBudget, periods, modo === "todos", fBudget2),
+    () => buildByGerencia(
+        fAgg,
+        fBudget,
+        periods.slice(-1),
+        modo === "todos",
+        fBudget2,
+      ),
     [fAgg, fBudget, periods, modo, fBudget2],
   );
 
@@ -859,7 +865,7 @@ function DashboardContent() {
               Dotación por gerencia, área y cargo
             </h2>
             <p className="text-[12px] text-ink-500">
-              HC por mes y diferencia contra presupuesto. Clic en una celda para
+              HC del último mes cargado y diferencia contra presupuesto. Clic en una celda para
               ver a las personas.
             </p>
           </div>
@@ -876,7 +882,7 @@ function DashboardContent() {
           <MatrixTable
             nodes={gerencias}
             totalNode={totalNode}
-            periods={periods}
+            periods={periods.slice(-1)}
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
