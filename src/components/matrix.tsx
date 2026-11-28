@@ -92,7 +92,9 @@ export function MatrixTable({
   };
 
   return (
-    <div className="matrix-scroll max-h-[620px] overflow-auto">
+    <div
+      className={`matrix-scroll overflow-auto ${collapsibleYear && !showAllMonths ? "" : "max-h-[620px]"}`}
+    >
       <table className="w-full border-separate border-spacing-0 text-[13px]">
         <thead>
           <tr>
