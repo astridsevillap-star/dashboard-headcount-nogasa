@@ -22,10 +22,35 @@ import {
   hcOf,
   originalsOf,
 } from "@/lib/data";
-import type { AggRow, BudgetRow, MatrixNode, MergeRule, Movimiento } from "@/lib/types";
-import { monthLabel, num, parsePeriod, pct, periodLabel, signed } from "@/lib/format";
-import { Button, EmptyState, Segmented, Select, Skeleton, TextInput } from "@/components/ui";
-import { EvolutionChart, LegendRow, MovimientosChart, C } from "@/components/charts";
+import type {
+  AggRow,
+  BudgetRow,
+  MatrixNode,
+  MergeRule,
+  Movimiento,
+} from "@/lib/types";
+import {
+  monthLabel,
+  num,
+  parsePeriod,
+  pct,
+  periodLabel,
+  signed,
+} from "@/lib/format";
+import {
+  Button,
+  EmptyState,
+  Segmented,
+  Select,
+  Skeleton,
+  TextInput,
+} from "@/components/ui";
+import {
+  EvolutionChart,
+  LegendRow,
+  MovimientosChart,
+  C,
+} from "@/components/charts";
 import { GapLegend, GapMeters } from "@/components/gapmeter";
 import { MatrixTable, type CellFilter } from "@/components/matrix";
 import { MultiSelect } from "@/components/multi-select";
@@ -33,6 +58,9 @@ import { DetailDrawer, type DrawerFilter } from "@/components/drawer";
 import { AuthGuard } from "@/components/auth-guard";
 
 type Modo = "activos" | "todos";
+
+// Paneles ocultos por ahora (Por dotación, etc.). Poner en true para volver a mostrarlos.
+const MOSTRAR_PANELES_EXTRA = false;
 
 function DashboardContent() {
   const [agg, setAgg] = useState<AggRow[] | null>(null);
@@ -72,7 +100,7 @@ function DashboardContent() {
     if (ys.includes(cy)) setVentana(String(cy));
     else if (ys.length) setVentana(String(Math.max(...ys)));
     const nogasa = Array.from(new Set(agg.map((r) => r.empresa))).find((e) =>
-      e.toLocaleUpperCase("es").includes("NOGASA")
+      e.toLocaleUpperCase("es").includes("NOGASA"),
     );
     if (nogasa) setEmpresa([nogasa]);
     setInitialized(true);
@@ -86,10 +114,19 @@ function DashboardContent() {
         const byP = new Map<string, Movimiento>();
         for (const m of res.flat()) {
           const prev = byP.get(m.period);
-          if (prev) byP.set(m.period, { ...prev, altas: prev.altas + m.altas, bajas: prev.bajas + m.bajas });
+          if (prev)
+            byP.set(m.period, {
+              ...prev,
+              altas: prev.altas + m.altas,
+              bajas: prev.bajas + m.bajas,
+            });
           else byP.set(m.period, { ...m });
         }
-        setMov(Array.from(byP.values()).sort((a, b) => a.period.localeCompare(b.period)));
+        setMov(
+          Array.from(byP.values()).sort((a, b) =>
+            a.period.localeCompare(b.period),
+          ),
+        );
       })
       .catch(() => setMov([]));
   }, [empresa]);
@@ -99,15 +136,15 @@ function DashboardContent() {
   // reglas de homologación: los valores históricos se agrupan bajo el nombre nuevo
   const ruleMaps = useMemo(
     () => buildValueMaps(agg ?? [], budget ?? [], rules),
-    [agg, budget, rules]
+    [agg, budget, rules],
   );
   const mAgg = useMemo(
     () => applyRulesToAgg(agg ?? [], ruleMaps),
-    [agg, ruleMaps]
+    [agg, ruleMaps],
   );
   const mBudget = useMemo(
     () => applyRulesToBudget(budget ?? [], ruleMaps),
-    [budget, ruleMaps]
+    [budget, ruleMaps],
   );
 
   const years = useMemo(() => {
@@ -124,7 +161,7 @@ function DashboardContent() {
 
   const fAgg = useMemo(
     () => mAgg.filter((r) => !empresa.length || empresa.includes(r.empresa)),
-    [mAgg, empresa]
+    [mAgg, empresa],
   );
 
   // convierte un filtro de celda (valores mostrados) a valores originales
@@ -133,13 +170,23 @@ function DashboardContent() {
       period: f.period,
       label: f.label,
       dotacion:
-        f.dotacion !== undefined ? originalsOf(ruleMaps, "dotacion", f.dotacion) : undefined,
+        f.dotacion !== undefined
+          ? originalsOf(ruleMaps, "dotacion", f.dotacion)
+          : undefined,
       categoria:
-        f.categoria !== undefined ? originalsOf(ruleMaps, "categoria", f.categoria) : undefined,
-      cargo: f.cargo !== undefined ? originalsOf(ruleMaps, "cargo", f.cargo) : undefined,
-      area: f.area !== undefined ? originalsOf(ruleMaps, "area", f.area) : undefined,
+        f.categoria !== undefined
+          ? originalsOf(ruleMaps, "categoria", f.categoria)
+          : undefined,
+      cargo:
+        f.cargo !== undefined
+          ? originalsOf(ruleMaps, "cargo", f.cargo)
+          : undefined,
+      area:
+        f.area !== undefined
+          ? originalsOf(ruleMaps, "area", f.area)
+          : undefined,
     }),
-    [ruleMaps]
+    [ruleMaps],
   );
 
   const periods = useMemo(() => {
@@ -158,15 +205,14 @@ function DashboardContent() {
   // la ventana cruza años → etiquetas de mes con año
   const spansYears = useMemo(
     () => new Set(periods.map((p) => parsePeriod(p).y)).size > 1,
-    [periods]
+    [periods],
   );
   const labels = useMemo(() => {
     const map: Record<string, string> = {};
     for (const p of periods) map[p] = monthLabel(p, spansYears);
     return map;
   }, [periods, spansYears]);
-  const windowTitle =
-    ventana === "12m" ? "últimos 12 meses" : `año ${ventana}`;
+  const windowTitle = ventana === "12m" ? "últimos 12 meses" : `año ${ventana}`;
 
   // presupuesto del año (o el más reciente disponible como base)
   const budgetYear = useMemo(() => {
@@ -181,9 +227,11 @@ function DashboardContent() {
   const fBudget = useMemo(
     () =>
       mBudget.filter(
-        (b) => b.anio === budgetYear && (!empresa.length || empresa.includes(b.empresa))
+        (b) =>
+          b.anio === budgetYear &&
+          (!empresa.length || empresa.includes(b.empresa)),
       ),
-    [mBudget, budgetYear, empresa]
+    [mBudget, budgetYear, empresa],
   );
 
   // presupuesto del año siguiente (p. ej. 2027): columna adicional, si está cargado
@@ -191,15 +239,20 @@ function DashboardContent() {
   const fBudget2 = useMemo(
     () =>
       mBudget.filter(
-        (b) => b.anio === budget2Year && (!empresa.length || empresa.includes(b.empresa))
+        (b) =>
+          b.anio === budget2Year &&
+          (!empresa.length || empresa.includes(b.empresa)),
       ),
-    [mBudget, budget2Year, empresa]
+    [mBudget, budget2Year, empresa],
   );
-  const budget2Label = fBudget2.length > 0 && budget2Year !== null ? String(budget2Year) : undefined;
+  const budget2Label =
+    fBudget2.length > 0 && budget2Year !== null
+      ? String(budget2Year)
+      : undefined;
 
   const budgetTotal = useMemo(
     () => fBudget.reduce((s, b) => s + b.cantidad, 0),
-    [fBudget]
+    [fBudget],
   );
   const budgetAvailable = budgetTotal > 0;
 
@@ -218,7 +271,7 @@ function DashboardContent() {
 
   const movActual = useMemo(
     () => (mov ?? []).find((m) => m.period === lastPeriod) ?? null,
-    [mov, lastPeriod]
+    [mov, lastPeriod],
   );
 
   const evolutionData = useMemo(
@@ -228,7 +281,7 @@ function DashboardContent() {
         hc: hcByPeriod.get(p) ?? null,
         presupuesto: budgetAvailable ? budgetTotal : null,
       })),
-    [periods, labels, hcByPeriod, budgetAvailable, budgetTotal]
+    [periods, labels, hcByPeriod, budgetAvailable, budgetTotal],
   );
 
   const dotacionData = useMemo(() => {
@@ -271,7 +324,7 @@ function DashboardContent() {
 
   const tree = useMemo(
     () => buildMatrix(fAgg, fBudget, periods, modo === "todos", fBudget2),
-    [fAgg, fBudget, periods, modo, fBudget2]
+    [fAgg, fBudget, periods, modo, fBudget2],
   );
 
   const totalNode = useMemo<MatrixNode>(() => {
@@ -298,7 +351,7 @@ function DashboardContent() {
 
   const gerencias = useMemo(
     () => buildByGerencia(fAgg, fBudget, periods, modo === "todos", fBudget2),
-    [fAgg, fBudget, periods, modo, fBudget2]
+    [fAgg, fBudget, periods, modo, fBudget2],
   );
 
   const brechas = useMemo(() => {
@@ -321,8 +374,14 @@ function DashboardContent() {
       }
     };
     walk(tree);
-    const deficit = leaves.filter((l) => l.delta < 0).sort((a, b) => a.delta - b.delta).slice(0, 6);
-    const sobre = leaves.filter((l) => l.delta > 0).sort((a, b) => b.delta - a.delta).slice(0, 6);
+    const deficit = leaves
+      .filter((l) => l.delta < 0)
+      .sort((a, b) => a.delta - b.delta)
+      .slice(0, 6);
+    const sobre = leaves
+      .filter((l) => l.delta > 0)
+      .sort((a, b) => b.delta - a.delta)
+      .slice(0, 6);
     return { deficit, sobre };
   }, [tree, budgetAvailable, lastPeriod]);
 
@@ -334,7 +393,7 @@ function DashboardContent() {
       ...periods.flatMap((p) =>
         budgetAvailable
           ? [`HC ${monthLabel(p, true)}`, `Dif ${monthLabel(p, true)}`]
-          : [`HC ${monthLabel(p, true)}`]
+          : [`HC ${monthLabel(p, true)}`],
       ),
     ];
     const rows: (string | number | null)[][] = [];
@@ -366,7 +425,11 @@ function DashboardContent() {
       <EmptyState
         title="No se pudo cargar la información"
         body={error}
-        action={<Button variant="primary" onClick={load}>Reintentar</Button>}
+        action={
+          <Button variant="primary" onClick={load}>
+            Reintentar
+          </Button>
+        }
       />
     );
   }
@@ -474,12 +537,15 @@ function DashboardContent() {
                       : "bg-ok-50 text-ok-600"
                 }`}
               >
-                {deltaPpto === 0 ? "= presupuesto" : `${signed(deltaPpto)} vs presupuesto`}
+                {deltaPpto === 0
+                  ? "= presupuesto"
+                  : `${signed(deltaPpto)} vs presupuesto`}
               </span>
             )}
             {hcPrev !== null && (
               <span className="text-ink-500">
-                {signed(hcActual - hcPrev)} vs {prevPeriod ? labels[prevPeriod] : ""}
+                {signed(hcActual - hcPrev)} vs{" "}
+                {prevPeriod ? labels[prevPeriod] : ""}
               </span>
             )}
           </div>
@@ -498,7 +564,10 @@ function DashboardContent() {
                 `Año ${budgetYear}`
               )
             ) : (
-              <Link href="/presupuesto" className="text-brand-600 hover:underline">
+              <Link
+                href="/presupuesto"
+                className="text-brand-600 hover:underline"
+              >
                 Cargar presupuesto
               </Link>
             )}
@@ -556,21 +625,30 @@ function DashboardContent() {
 
       {/* fila de gráficos */}
       <div className="grid grid-cols-12 gap-4">
-        <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-8">
+        <section
+          className={`col-span-12 rounded-[12px] border border-line bg-surface ${MOSTRAR_PANELES_EXTRA ? "lg:col-span-8" : ""}`}
+        >
           <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-4">
             <div>
               <h2 className="text-[14px] font-semibold text-ink-900">
                 Evolución mensual
               </h2>
               <p className="text-[12px] text-ink-500">
-                Dotación {modo === "activos" ? "activa" : "total"}, {windowTitle}
+                Dotación {modo === "activos" ? "activa" : "total"},{" "}
+                {windowTitle}
               </p>
             </div>
             <LegendRow
               items={[
                 { label: "Dotación", swatch: "line", color: C.brand },
                 ...(budgetAvailable
-                  ? [{ label: "Presupuesto", swatch: "line" as const, color: C.ref }]
+                  ? [
+                      {
+                        label: "Presupuesto",
+                        swatch: "line" as const,
+                        color: C.ref,
+                      },
+                    ]
                   : []),
               ]}
             />
@@ -586,124 +664,132 @@ function DashboardContent() {
           </div>
         </section>
 
-        <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-4">
-          <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-2 pt-4">
-            <div>
-              <h2 className="text-[14px] font-semibold text-ink-900">
-                Por dotación
-              </h2>
-              <p className="text-[12px] text-ink-500">
-                {lastPeriod ? periodLabel(lastPeriod, true) : ""} contra presupuesto
-              </p>
-            </div>
-            <GapLegend />
-          </header>
-          <div className="px-3 pb-4">
-            {dotacionData.length > 0 ? (
-              <GapMeters
-                rows={dotacionData}
-                onRowClick={(name) =>
-                  lastPeriod &&
-                  setCell(
-                    toDrawer({
-                      period: lastPeriod,
-                      dotacion: name === "(sin dotación)" ? "" : name,
-                      label: name,
-                    })
-                  )
-                }
-              />
-            ) : (
-              <p className="px-4 py-16 text-center text-sm text-ink-500">
-                Sin datos para este filtro.
-              </p>
-            )}
-          </div>
-        </section>
+        {MOSTRAR_PANELES_EXTRA && (
+          <>
+            <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-4">
+              <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-2 pt-4">
+                <div>
+                  <h2 className="text-[14px] font-semibold text-ink-900">
+                    Por dotación
+                  </h2>
+                  <p className="text-[12px] text-ink-500">
+                    {lastPeriod ? periodLabel(lastPeriod, true) : ""} contra
+                    presupuesto
+                  </p>
+                </div>
+                <GapLegend />
+              </header>
+              <div className="px-3 pb-4">
+                {dotacionData.length > 0 ? (
+                  <GapMeters
+                    rows={dotacionData}
+                    onRowClick={(name) =>
+                      lastPeriod &&
+                      setCell(
+                        toDrawer({
+                          period: lastPeriod,
+                          dotacion: name === "(sin dotación)" ? "" : name,
+                          label: name,
+                        }),
+                      )
+                    }
+                  />
+                ) : (
+                  <p className="px-4 py-16 text-center text-sm text-ink-500">
+                    Sin datos para este filtro.
+                  </p>
+                )}
+              </div>
+            </section>
 
-        <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-5">
-          <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-4">
-            <div>
-              <h2 className="text-[14px] font-semibold text-ink-900">
-                Altas y bajas
-              </h2>
-              <p className="text-[12px] text-ink-500">
-                Movimientos de personal, {windowTitle}
-              </p>
-            </div>
-            <LegendRow
-              items={[
-                { label: "Altas", swatch: "bar", color: C.brand },
-                { label: "Bajas", swatch: "bar", color: C.danger },
-              ]}
-            />
-          </header>
-          <div className="px-2 pb-3">
-            {movData.length > 0 ? (
-              <MovimientosChart data={movData} />
-            ) : (
-              <p className="px-4 py-16 text-center text-sm text-ink-500">
-                Sin movimientos para este periodo.
-              </p>
-            )}
-          </div>
-        </section>
+            <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-5">
+              <header className="flex flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-4">
+                <div>
+                  <h2 className="text-[14px] font-semibold text-ink-900">
+                    Altas y bajas
+                  </h2>
+                  <p className="text-[12px] text-ink-500">
+                    Movimientos de personal, {windowTitle}
+                  </p>
+                </div>
+                <LegendRow
+                  items={[
+                    { label: "Altas", swatch: "bar", color: C.brand },
+                    { label: "Bajas", swatch: "bar", color: C.danger },
+                  ]}
+                />
+              </header>
+              <div className="px-2 pb-3">
+                {movData.length > 0 ? (
+                  <MovimientosChart data={movData} />
+                ) : (
+                  <p className="px-4 py-16 text-center text-sm text-ink-500">
+                    Sin movimientos para este periodo.
+                  </p>
+                )}
+              </div>
+            </section>
 
-        <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-7">
-          <header className="px-5 pb-2 pt-4">
-            <h2 className="text-[14px] font-semibold text-ink-900">
-              Mayores brechas vs presupuesto
-            </h2>
-            <p className="text-[12px] text-ink-500">
-              Por cargo, {lastPeriod ? periodLabel(lastPeriod, true) : ""}
-            </p>
-          </header>
-          {brechas ? (
-            <div className="grid grid-cols-1 gap-x-8 px-5 pb-4 sm:grid-cols-2">
-              <GapList
-                title="Déficit"
-                items={brechas.deficit}
-                tone="deficit"
-                onItem={(it) =>
-                  lastPeriod &&
-                  setCell(
-                    toDrawer({
-                      period: lastPeriod,
-                      dotacion: it.dotacion,
-                      categoria: it.categoria,
-                      cargo: it.cargo,
-                      label: it.label,
-                    })
-                  )
-                }
-              />
-              <GapList
-                title="Sobre presupuesto"
-                items={brechas.sobre}
-                tone="sobre"
-                onItem={(it) =>
-                  lastPeriod &&
-                  setCell(
-                    toDrawer({
-                      period: lastPeriod,
-                      dotacion: it.dotacion,
-                      categoria: it.categoria,
-                      cargo: it.cargo,
-                      label: it.label,
-                    })
-                  )
-                }
-              />
-            </div>
-          ) : (
-            <p className="px-5 pb-6 text-sm text-ink-500">
-              Carga el presupuesto para comparar la dotación contra la base.{" "}
-              <Link href="/presupuesto" className="text-brand-600 hover:underline">
-                Ir a presupuesto
-              </Link>
-            </p>
-          )}
-        </section>
+            <section className="col-span-12 rounded-[12px] border border-line bg-surface lg:col-span-7">
+              <header className="px-5 pb-2 pt-4">
+                <h2 className="text-[14px] font-semibold text-ink-900">
+                  Mayores brechas vs presupuesto
+                </h2>
+                <p className="text-[12px] text-ink-500">
+                  Por cargo, {lastPeriod ? periodLabel(lastPeriod, true) : ""}
+                </p>
+              </header>
+              {brechas ? (
+                <div className="grid grid-cols-1 gap-x-8 px-5 pb-4 sm:grid-cols-2">
+                  <GapList
+                    title="Déficit"
+                    items={brechas.deficit}
+                    tone="deficit"
+                    onItem={(it) =>
+                      lastPeriod &&
+                      setCell(
+                        toDrawer({
+                          period: lastPeriod,
+                          dotacion: it.dotacion,
+                          categoria: it.categoria,
+                          cargo: it.cargo,
+                          label: it.label,
+                        }),
+                      )
+                    }
+                  />
+                  <GapList
+                    title="Sobre presupuesto"
+                    items={brechas.sobre}
+                    tone="sobre"
+                    onItem={(it) =>
+                      lastPeriod &&
+                      setCell(
+                        toDrawer({
+                          period: lastPeriod,
+                          dotacion: it.dotacion,
+                          categoria: it.categoria,
+                          cargo: it.cargo,
+                          label: it.label,
+                        }),
+                      )
+                    }
+                  />
+                </div>
+              ) : (
+                <p className="px-5 pb-6 text-sm text-ink-500">
+                  Carga el presupuesto para comparar la dotación contra la base.{" "}
+                  <Link
+                    href="/presupuesto"
+                    className="text-brand-600 hover:underline"
+                  >
+                    Ir a presupuesto
+                  </Link>
+                </p>
+              )}
+            </section>
+          </>
+        )}
       </div>
 
       {/* matriz jerárquica */}
@@ -714,7 +800,8 @@ function DashboardContent() {
               Matriz por dotación, categoría y cargo
             </h2>
             <p className="text-[12px] text-ink-500">
-              HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
+              HC por mes y diferencia contra presupuesto. Clic en una celda para
+              ver a las personas.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -749,7 +836,9 @@ function DashboardContent() {
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
-            budgetLabel={budgetYear !== null ? String(budgetYear) : undefined}
+            budgetLabel={
+              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+            }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
           />
@@ -768,7 +857,8 @@ function DashboardContent() {
               Dotación por gerencia, área y cargo
             </h2>
             <p className="text-[12px] text-ink-500">
-              HC por mes y diferencia contra presupuesto. Clic en una celda para ver a las personas.
+              HC por mes y diferencia contra presupuesto. Clic en una celda para
+              ver a las personas.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -788,7 +878,9 @@ function DashboardContent() {
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
-            budgetLabel={budgetYear !== null ? String(budgetYear) : undefined}
+            budgetLabel={
+              budgetYear !== null ? `Cierre ${budgetYear - 1}` : undefined
+            }
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandGer}
             firstColumnLabel="Gerencia / Área / Cargo"
