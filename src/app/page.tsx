@@ -749,6 +749,7 @@ function DashboardContent() {
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
+            budgetLabel={budgetYear !== null ? String(budgetYear) : undefined}
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandSignal}
           />
@@ -787,6 +788,7 @@ function DashboardContent() {
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
+            budgetLabel={budgetYear !== null ? String(budgetYear) : undefined}
             onCellClick={(f) => setCell(toDrawer(f))}
             expandSignal={expandGer}
             firstColumnLabel="Gerencia / Área / Cargo"

@@ -23,6 +23,7 @@ export function MatrixTable({
   labels,
   budgetAvailable,
   budget2Label,
+  budgetLabel,
   onCellClick,
   expandSignal,
   firstColumnLabel = "Dotación / Categoría / Cargo",
@@ -34,6 +35,8 @@ export function MatrixTable({
   budgetAvailable: boolean;
   /** Etiqueta de la columna de presupuesto del año siguiente (si hay) */
   budget2Label?: string;
+  /** Etiqueta de la columna de presupuesto del año (por defecto "Ppto.") */
+  budgetLabel?: string;
   onCellClick: (f: CellFilter) => void;
   /** contador que fuerza expandir (+n) o colapsar (-n) todo */
   expandSignal: number;
@@ -92,12 +95,7 @@ export function MatrixTable({
             </th>
             {budgetAvailable && (
               <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-brand-25 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
-                Ppto.
-              </th>
-            )}
-            {budget2Label && (
-              <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-warn-100/60 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
-                {budget2Label}
+                {budgetLabel ?? "Ppto."}
               </th>
             )}
             {periods.map((p) => (
@@ -108,6 +106,11 @@ export function MatrixTable({
                 {labels[p]}
               </th>
             ))}
+            {budget2Label && (
+              <th className="sticky top-0 z-20 min-w-[72px] border-b border-l border-line bg-warn-100/60 px-3 py-2.5 text-right text-[11.5px] font-medium uppercase tracking-wide text-ink-500">
+                {budget2Label}
+              </th>
+            )}
           </tr>
         </thead>
         <tbody>
@@ -210,12 +213,6 @@ function Row({
         </td>
       )}
 
-      {budget2Label && (
-        <td className="tnum border-b border-l border-line-soft bg-warn-100/30 px-3 text-right font-mono text-[12.5px] text-ink-700">
-          {(node.budget2 ?? 0) > 0 ? num(node.budget2 ?? 0) : "–"}
-        </td>
-      )}
-
       {periods.map((p) => {
         const hc = node.hc[p];
         const has = hc !== undefined;
@@ -271,6 +268,11 @@ function Row({
           </td>
         );
       })}
+      {budget2Label && (
+        <td className="tnum border-b border-l border-line-soft bg-warn-100/30 px-3 text-right font-mono text-[12.5px] text-ink-700">
+          {(node.budget2 ?? 0) > 0 ? num(node.budget2 ?? 0) : "–"}
+        </td>
+      )}
     </tr>
   );
 }
