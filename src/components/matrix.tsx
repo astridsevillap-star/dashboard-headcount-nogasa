@@ -19,7 +19,7 @@ type FlatRow = { node: MatrixNode; hasChildren: boolean; expanded: boolean };
 export function MatrixTable({
   nodes,
   totalNode,
-  periods,
+  periods: allPeriods,
   labels,
   budgetAvailable,
   budget2Label,
@@ -27,10 +27,13 @@ export function MatrixTable({
   onCellClick,
   expandSignal,
   firstColumnLabel = "Dotación / Categoría / Cargo",
+  collapsibleYear = false,
 }: {
   nodes: MatrixNode[];
   totalNode: MatrixNode;
   periods: string[];
+  /** Si es true, solo se ve el último mes; al hacer clic en el año aparecen todos */
+  collapsibleYear?: boolean;
   labels: Record<string, string>;
   budgetAvailable: boolean;
   /** Etiqueta de la columna de presupuesto del año siguiente (si hay) */
@@ -43,6 +46,9 @@ export function MatrixTable({
   firstColumnLabel?: string;
 }) {
   const [open, setOpen] = useState<Set<string>>(new Set());
+  const [showAllMonths, setShowAllMonths] = useState(false);
+  const periods =
+    collapsibleYear && !showAllMonths ? allPeriods.slice(-1) : allPeriods;
   const [lastSignal, setLastSignal] = useState(0);
 
   // expandir / colapsar todo desde la barra superior
@@ -98,7 +104,21 @@ export function MatrixTable({
               colSpan={periods.length}
               className="sticky top-0 z-20 h-8 border-b border-line bg-surface px-3 text-center text-[11.5px] font-semibold uppercase tracking-wide text-ink-700"
             >
-              {periods[0]?.slice(0, 4)}
+              {collapsibleYear ? (
+                <button
+                  type="button"
+                  onClick={() => setShowAllMonths((v) => !v)}
+                  className="inline-flex items-center gap-1 uppercase hover:text-brand-600"
+                  title={
+                    showAllMonths ? "Ocultar meses" : "Ver todos los meses"
+                  }
+                >
+                  {allPeriods[0]?.slice(0, 4)}
+                  <span aria-hidden>{showAllMonths ? "◂" : "▸"}</span>
+                </button>
+              ) : (
+                allPeriods[0]?.slice(0, 4)
+              )}
             </th>
             {budget2Label && (
               <th className="sticky top-0 z-20 h-8 border-l border-line bg-warn-100/60" />
@@ -183,7 +203,12 @@ function Row({
       : level === 1
         ? "font-medium"
         : "";
-  const labelColor = isTotal || level === 0 ? "text-ink-900" : level === 1 ? "text-ink-700" : "text-ink-500";
+  const labelColor =
+    isTotal || level === 0
+      ? "text-ink-900"
+      : level === 1
+        ? "text-ink-700"
+        : "text-ink-500";
   const stickyBg = isTotal
     ? "bg-[#f2f2f4]"
     : level === 0
@@ -197,7 +222,9 @@ function Row({
       >
         <div
           className="flex min-h-[42px] items-center gap-1"
-          style={{ paddingLeft: isTotal ? 8 : level * 18 + (hasChildren ? 0 : 22) }}
+          style={{
+            paddingLeft: isTotal ? 8 : level * 18 + (hasChildren ? 0 : 22),
+          }}
         >
           {hasChildren && (
             <button
@@ -232,7 +259,8 @@ function Row({
         const hc = node.hc[p];
         const has = hc !== undefined;
         const relevant = has || node.budget > 0;
-        const delta = budgetAvailable && relevant ? (hc ?? 0) - node.budget : null;
+        const delta =
+          budgetAvailable && relevant ? (hc ?? 0) - node.budget : null;
 
         // semáforo: rojo = déficit, ámbar = superávit, verde solo cuando HC = presupuesto
         const cellBg =
@@ -257,7 +285,10 @@ function Row({
               onClick={() =>
                 onCellClick({
                   period: p,
-                  dotacion: isTotal || node.area !== undefined ? undefined : node.dotacion,
+                  dotacion:
+                    isTotal || node.area !== undefined
+                      ? undefined
+                      : node.dotacion,
                   categoria: node.categoria,
                   cargo: node.cargo,
                   area: node.area,
@@ -267,11 +298,15 @@ function Row({
               className={`block h-full w-full px-3 py-1.5 text-right transition-colors ${cellBg}`}
               title="Ver detalle de personas"
             >
-              <span className={`tnum block font-mono text-[12.5px] ${has ? "text-ink-900" : "text-ink-300"}`}>
+              <span
+                className={`tnum block font-mono text-[12.5px] ${has ? "text-ink-900" : "text-ink-300"}`}
+              >
                 {has ? num(hc) : "–"}
               </span>
               {budgetAvailable && (
-                <span className={`tnum block font-mono text-[10.5px] font-medium leading-tight ${deltaColor}`}>
+                <span
+                  className={`tnum block font-mono text-[10.5px] font-medium leading-tight ${deltaColor}`}
+                >
                   {delta !== null && (has || node.budget > 0)
                     ? delta === 0
                       ? "="

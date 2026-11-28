@@ -794,61 +794,61 @@ function DashboardContent() {
 
       {/* matriz jerárquica */}
       {MOSTRAR_PANELES_EXTRA && (
-      <section className="rounded-[12px] border border-line bg-surface">
-        <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
-          <div>
-            <h2 className="text-[14px] font-semibold text-ink-900">
-              Matriz por dotación, categoría y cargo
-            </h2>
-            <p className="text-[12px] text-ink-500">
-              HC por mes y diferencia contra presupuesto. Clic en una celda para
-              ver a las personas.
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <div className="relative">
-              <MagnifyingGlass
-                size={15}
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
-              />
-              <TextInput
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder="Buscar cargo o área"
-                className="w-52 pl-9"
-              />
+        <section className="rounded-[12px] border border-line bg-surface">
+          <header className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+            <div>
+              <h2 className="text-[14px] font-semibold text-ink-900">
+                Matriz por dotación, categoría y cargo
+              </h2>
+              <p className="text-[12px] text-ink-500">
+                HC por mes y diferencia contra presupuesto. Clic en una celda
+                para ver a las personas.
+              </p>
             </div>
-            <Button size="sm" onClick={() => setExpandSignal((s) => s + 1)}>
-              <ArrowsOutSimple size={14} /> Expandir
-            </Button>
-            <Button size="sm" onClick={() => setExpandSignal((s) => s - 1)}>
-              <ArrowsInSimple size={14} /> Colapsar
-            </Button>
-            <Button size="sm" onClick={exportMatrix}>
-              <DownloadSimple size={14} /> Exportar
-            </Button>
-          </div>
-        </header>
-        {periods.length > 0 ? (
-          <MatrixTable
-            nodes={visibleTree}
-            totalNode={totalNode}
-            periods={periods}
-            labels={labels}
-            budgetAvailable={budgetAvailable}
-            budget2Label={budget2Label}
-            budgetLabel={
-              budgetYear !== null ? String(budgetYear - 1) : undefined
-            }
-            onCellClick={(f) => setCell(toDrawer(f))}
-            expandSignal={expandSignal}
-          />
-        ) : (
-          <p className="px-5 py-10 text-center text-sm text-ink-500">
-            Sin meses cargados para este periodo.
-          </p>
-        )}
-      </section>
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
+                <MagnifyingGlass
+                  size={15}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-ink-400"
+                />
+                <TextInput
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Buscar cargo o área"
+                  className="w-52 pl-9"
+                />
+              </div>
+              <Button size="sm" onClick={() => setExpandSignal((s) => s + 1)}>
+                <ArrowsOutSimple size={14} /> Expandir
+              </Button>
+              <Button size="sm" onClick={() => setExpandSignal((s) => s - 1)}>
+                <ArrowsInSimple size={14} /> Colapsar
+              </Button>
+              <Button size="sm" onClick={exportMatrix}>
+                <DownloadSimple size={14} /> Exportar
+              </Button>
+            </div>
+          </header>
+          {periods.length > 0 ? (
+            <MatrixTable
+              nodes={visibleTree}
+              totalNode={totalNode}
+              periods={periods}
+              labels={labels}
+              budgetAvailable={budgetAvailable}
+              budget2Label={budget2Label}
+              budgetLabel={
+                budgetYear !== null ? String(budgetYear - 1) : undefined
+              }
+              onCellClick={(f) => setCell(toDrawer(f))}
+              expandSignal={expandSignal}
+            />
+          ) : (
+            <p className="px-5 py-10 text-center text-sm text-ink-500">
+              Sin meses cargados para este periodo.
+            </p>
+          )}
+        </section>
       )}
 
       {/* HC por gerencia */}
@@ -859,8 +859,8 @@ function DashboardContent() {
               Dotación por gerencia, área y cargo
             </h2>
             <p className="text-[12px] text-ink-500">
-              HC por mes y diferencia contra presupuesto. Clic en una celda para
-              ver a las personas.
+              Octubre contra presupuesto. Clic en el año 2026 para ver todos los
+              meses. Clic en una celda para ver a las personas.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -877,6 +877,7 @@ function DashboardContent() {
             nodes={gerencias}
             totalNode={totalNode}
             periods={periods}
+            collapsibleYear
             labels={labels}
             budgetAvailable={budgetAvailable}
             budget2Label={budget2Label}
