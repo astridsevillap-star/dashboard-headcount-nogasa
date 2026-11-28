@@ -68,6 +68,8 @@ export type MatrixNode = {
   label: string;
   level: 0 | 1 | 2;
   budget: number;
+  /** Presupuesto del año siguiente (columna adicional), si existe */
+  budget2?: number;
   hc: Record<string, number>;
   children: MatrixNode[];
   dotacion: string;
